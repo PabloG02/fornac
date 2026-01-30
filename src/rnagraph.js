@@ -1,5 +1,4 @@
 import {arraysEqual,RNAUtilities,rnaUtilities} from './rnautils.js';
-import slugid from 'slugid';
 
 var numberSort = function(a,b) { return a - b; };
 
@@ -22,10 +21,10 @@ export function ProteinGraph(structName, size, uid) {
                    'structName': structName,
                    'elemType': 'p',
                    'size': size,
-                   'uid': slugid.nice()}];
+                   'uid': crypto.randomUUID()}];
 
     self.links = [];
-    self.uid = slugid.nice();
+    self.uid = crypto.randomUUID();
 
     self.addUids = function(uids) {
         for (let i = 0; i < uids.length; i++)
@@ -63,7 +62,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
         self.circular = true;
     }
 
-    self.uid = slugid.nice();
+    self.uid = crypto.randomUUID();
 
     self.elements = [];            //store the elements and the
                                    //nucleotides they contain
@@ -232,7 +231,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                     'y': self.nodes[self.rnaLength-1].y,
                     'px': self.nodes[self.rnaLength-1].px,
                     'py': self.nodes[self.rnaLength-1].py,
-                    'uid': slugid.nice() };
+                    'uid': crypto.randomUUID() };
                 var newNode2 = {'name': '',
                     'num': -2,
                     //'radius': 18 * radius -6,
@@ -245,7 +244,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                     'y': self.nodes[0].y,
                     'px': self.nodes[0].px,
                     'py': self.nodes[0].py,
-                    'uid': slugid.nice() };
+                    'uid': crypto.randomUUID() };
 
                     nucs.push(self.nodes.length+1);
                     nucs.push(self.nodes.length+2);
@@ -306,7 +305,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                              'target': self.nodes[self.nodes.length-1],
                              'linkType': 'fake',
                              'value': radius,
-                             'uid': slugid.nice() });
+                             'uid': crypto.randomUUID() });
 
             if (nucs.length > 4) {
                 //link across the loop
@@ -314,7 +313,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                                  'target': self.nodes[nucs[(j + Math.floor(nucs.length / 2)) % nucs.length] - 1],
                                  'linkType': 'fake',
                                  'value': radius * 2,
-                                 'uid': slugid.nice() });
+                                 'uid': crypto.randomUUID() });
             }
 
             var ia = ((nucs.length - 2) * 3.14159) / nucs.length;
@@ -406,7 +405,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
             var target = self.getNodeFromNucleotides(extraLinks[i].to);
 
             var newLink = {'source': source, 'target': target, 'linkType': 'extra',
-                'extraLinkType': extraLinks[i].linkType, 'uid': slugid.nice() };
+                'extraLinkType': extraLinks[i].linkType, 'uid': crypto.randomUUID() };
 
                 self.links.push(newLink);
         }
@@ -457,7 +456,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                              'nodeType': 'nucleotide',
                              'structName': self.structName,
                              'elemType': elemTypes[i],
-                             'uid': slugid.nice(),
+                             'uid': crypto.randomUUID(),
                              'linked': false});
         }
 
@@ -483,7 +482,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                                  'target': self.nodes[pt[i]-1],
                                  'linkType': 'basepair',
                                  'value': 1,
-                                 'uid': slugid.nice() });
+                                 'uid': crypto.randomUUID() });
             }
 
             if (i > 1) {
@@ -497,7 +496,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                                     'target': self.nodes[i-1],
                                     'linkType': 'backbone',
                                     'value': 1,
-                                    'uid': slugid.nice() });
+                                    'uid': crypto.randomUUID() });
                     self.nodes[i-1].linked = true;
                 }
             }
@@ -509,7 +508,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                             'target': self.nodes[self.pseudoknotPairs[i][1]-1],
                             'linkType': 'pseudoknot',
                             'value': 1,
-                            'uid': slugid.nice()});
+                            'uid': crypto.randomUUID()});
         }
 
         if (self.circular) {
@@ -517,7 +516,7 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                             'target': self.nodes[self.rnaLength-1],
                             'linkType': 'backbone',
                             'value': 1,
-                            'uid': slugid.nice() });
+                            'uid': crypto.randomUUID() });
 
         }
 
@@ -717,12 +716,12 @@ export function RNAGraph(seq = '', dotbracket = '', structName = '', startNumber
                                  'y': newY,
                                  'px': newX,
                                  'py': newY,
-                                 'uid': slugid.nice() };
+                                 'uid': crypto.randomUUID() };
                 var newLink = {'source': self.nodes[i-1],
                             'target': newNode,
                             'value': 1,
                             'linkType': 'label_link',
-                            'uid': slugid.nice() };
+                            'uid': crypto.randomUUID() };
 
                 self.nodes.push(newNode);
                 self.links.push(newLink);
@@ -884,7 +883,7 @@ export function moleculesToJson(moleculesJson) {
 
         link.source = nodes[link.source];
         link.target = nodes[link.target];
-        link.uid = slugid.nice();
+        link.uid = crypto.randomUUID();
 
         extraLinks.push(link);
     }

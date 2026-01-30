@@ -2,12 +2,11 @@ import './d3-context-menu.css';
 import ArrowIcon from './img/play.svg';
 
 import d3 from 'd3';
-import slugid from 'slugid';
 
 export function contextMenu(menu, opts) {
     let previouslyMouseUp = false;
     let clickAway = () => {};
-    let uid = slugid.nice();
+    let uid = crypto.randomUUID();
     let rootElement = null;
     let orientation = 'right';   // display the menu to the right of the mouse click
                                  // or parent elemement
