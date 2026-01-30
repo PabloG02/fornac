@@ -2,8 +2,7 @@
 <html lang="">
   <head>
     <meta charset="utf-8" />
-    <title>Fornac Edditing Example</title>
-    <link rel="stylesheet" href="fornac.css" />
+    <title>Fornac Editing Example</title>
   </head>
   <body>
     <div style="max-width: 800px; margin: auto">
@@ -36,13 +35,11 @@
       </ul>
 
       <script src="https://unpkg.com/d3@3.5"></script>
-      <script src="fornac.js"></script>
-
-      <script type="text/javascript">
-        'use strict';
+      <script type="module">
+        import { FornaContainer } from 'fornac';
 
         function normalContainer() {
-          let container = new fornac.FornaContainer('#rna_ss', {
+          let container = new FornaContainer('#rna_ss', {
             animation: true,
             zoomable: true,
             initialSize: [600, 300],
