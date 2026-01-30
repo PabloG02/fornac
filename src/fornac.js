@@ -2,7 +2,7 @@
 * Date: 2015-03-15
 */
 
-import fstyle from './fornac.css';
+import fstyle from './fornac.module.css';
 
 import d3 from 'd3';
 import slugid from 'slugid';

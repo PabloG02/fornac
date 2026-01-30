@@ -33,7 +33,6 @@ Loop.prototype.setConnection = function(i, c){
 }
 
 Loop.prototype.getConnection = function(i){
-	var Connection = require("./connection");
 	if (!this._connections[i]){
         this._connections[i] = new Connection();
     }

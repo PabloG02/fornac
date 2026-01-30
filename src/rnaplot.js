@@ -3,7 +3,7 @@ import {RNAGraph} from './rnagraph.js';
 import {simpleXyCoordinates} from './simplernaplot.js';
 import {NAView} from './naview/naview.js'
 
-import fstyle from './fornac.css';
+import fstyle from './fornac.module.css';
 
 export function rnaPlot(passedOptions = {}) {
     var options = {
