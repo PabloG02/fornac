@@ -4,7 +4,7 @@
 
 import fstyle from './fornac.module.css';
 
-import d3 from 'd3';
+// d3 is expected to be loaded globally via script tag (v3.5 doesn't support ES modules)
 import { contextMenu } from './d3-context-menu.js';
 
 import { RNAGraph } from './rnagraph.js';

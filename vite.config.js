@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { existsSync } from 'fs';
 
 export default defineConfig({
   root: '.',
@@ -9,9 +8,8 @@ export default defineConfig({
     emptyOutDir: true,
     lib: {
       entry: resolve(__dirname, 'src/index.js'),
-      name: 'fornac',
-      fileName: (format) => (format === 'umd' ? 'fornac.js' : 'fornac.esm.js'),
-      formats: ['umd', 'es'],
+      fileName: 'fornac.esm',
+      formats: ['es'],
     },
     rollupOptions: {
       external: ['d3'],
@@ -33,21 +31,4 @@ export default defineConfig({
     port: 9000,
     open: '/examples/index.html',
   },
-  plugins: [
-    {
-      name: 'serve-built-library',
-      configureServer(server) {
-        // Serve built files from dist during development
-        server.middlewares.use((req, res, next) => {
-          // Redirect requests for fornac.js/css to dist folder
-          if (req.url === '/examples/fornac.js' || req.url === '/fornac.js') {
-            req.url = '/dist/fornac.js';
-          } else if (req.url === '/examples/fornac.css' || req.url === '/fornac.css') {
-            req.url = '/dist/fornac.css';
-          }
-          next();
-        });
-      },
-    },
-  ],
 });

@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <title>Fornac Examples</title>
-    <link rel="stylesheet" href="fornac.css" />
     <style>
       .options {
         float: left;
@@ -54,13 +53,11 @@
     </form>
 
     <script src="https://unpkg.com/d3@3.5"></script>
-    <script src='fornac.js'></script>
-
-    <script type='text/javascript'>
-    "use strict"
+    <script type="module">
+      import { FornaContainer } from 'fornac';
 
     function customColorsContainer() {
-        let container = new fornac.FornaContainer("#custom_colors",
+        let container = new FornaContainer("#custom_colors",
                 {'animation': false, 'zoomable': true, 'initialSize':[300,200]});
 
         let options = {'structure': '..((((....)))).....',
@@ -71,7 +68,7 @@
     }
 
     function normalContainer() {
-        let container = new fornac.FornaContainer("#rna_ss",
+        let container = new FornaContainer("#rna_ss",
                 {'animation': false, 'zoomable': true, 'initialSize':[500,300]});
 
         let options = {'structure': '..((..((...[)).(((..].))).))..',
@@ -82,7 +79,7 @@
     }
 
     function naviewContainer() {
-        let container = new fornac.FornaContainer("#naview_ss",
+        let container = new FornaContainer("#naview_ss",
                 {'animation': false, 'zoomable': false, 'initialSize':[500,300],
                 'layout': 'naview'});
 
@@ -94,17 +91,17 @@
 
 
     function cofoldContainer() {
-        var container = new fornac.FornaContainer("#cofold_ss",
+        var container = new FornaContainer("#cofold_ss",
                 {'animation': true, 'zoomable': false, 'initialSize':[500,300]});
 
-        var options = {'structure': '..((((...))))...((...((...((..&............))...))...))..',
+        var options = {'structure': '..((((...))))...((...((...((.....))...))...))..',
                         'sequence': 'ACGAUCAGAGAUCAGAGCAUACGACAGCAG&ACGAAAAAAAGAGCAUACGACAGCAG'
         };
         container.addRNA(options.structure, options);
     }
 
     function multiContainer() {
-        var container = new fornac.FornaContainer("#multi_ss",
+        var container = new FornaContainer("#multi_ss",
                 {'animation': false, 'zoomable': true, 'initialSize':[500,300]});
 
         container.addRNA('..((((....))))', {'sequence': 'ACGAUCAGAGAUCA'});
@@ -117,11 +114,14 @@
     multiContainer();
     let cc = customColorsContainer();
 
-    function handleCustomColorApply() {
+    // Expose to window for form/checkbox handlers
+    window.nc = nc;
+
+    window.handleCustomColorApply = function() {
       cc.addCustomColorsText(document.getElementById("CustomColorText").value);
       return false;
-    }
-    handleCustomColorApply();
+    };
+    window.handleCustomColorApply();
 
     /*
     var options1 = {'structure': '.((((....)))).',

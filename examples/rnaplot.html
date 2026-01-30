@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>RNAPlot Examples</title>
-    <link rel="stylesheet" href="fornac.css" />
     <style>
       svg {
         width: 100%;
@@ -66,137 +65,103 @@
       </div>
       <div id="rna_rpt" class="svg-container-grid"></div>
 
-      <script src="https://unpkg.com/jquery"></script>
       <script src="https://unpkg.com/d3@3.5"></script>
       <script src="https://unpkg.com/d3-grid"></script>
-      <script src="fornac.js"></script>
+      <script type="module">
+        import { rnaPlot } from 'fornac';
 
-      <script type="text/javascript">
-        var svgWidth = 200;
-        var svgHeight = 200;
+        // --- SECTION 1: RNA Secondary Structure ---
+        const svgWidth1 = 200;
+        const svgHeight1 = 200;
 
-        var rna1 = {
-          structure: '((..((....)).(((....))).))',
-          sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
-          name: 'RNA1',
-        };
+        const rnaData1 = [
+          { structure: '((..((....)).(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', name: 'RNA1' },
+          { structure: '((((....))))', sequence: 'AGGCUGUAGCUU', name: 'RNA2' }
+        ];
 
-        var rna2 = { structure: '((((....))))', sequence: 'AGGCUGUAGCUU', name: 'RNA2' };
-
-        var chart = fornac
-          .rnaPlot()
-          .width(svgWidth)
-          .height(svgHeight)
+        const chart1 = rnaPlot()
+          .width(svgWidth1)
+          .height(svgHeight1)
           .rnaLayout('simple')
           .namePosition('0 0')
           .startNucleotideNumber(10)
           .labelInterval(5);
 
-        var svg = d3
-          .select('#rna_ss')
+        d3.select('#rna_ss')
           .selectAll('svg')
-          .data([rna1, rna2])
+          .data(rnaData1)
           .enter()
           .append('div')
           .classed('svg-container', true)
           .append('svg')
           .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr('viewBox', '0 0 ' + svgWidth + ' ' + svgHeight)
-          .call(chart);
-      </script>
-      <script type="text/javascript">
-        var gridData = [
-          {
-            structure: '((..((....)).(((....))).))',
-            sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
-            size: 50,
-            extraLinks: [
-              [3, 10],
-              [1, 17],
-            ],
-            name: 'blah',
-          },
-          {
-            structure: '((...........(((....))).))',
-            sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
-            size: 40,
-            name: 'blub',
-          },
-          {
-            structure: '..........................',
-            sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
-            size: 10,
-            name: 'doh',
-          },
+          .attr('viewBox', `0 0 ${svgWidth1} ${svgHeight1}`)
+          .call(chart1);
+
+
+        // --- SECTION 2: GRID LAYOUT ---
+        const gridData = [
+          { structure: '((..((....)).(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 50, extraLinks: [[3, 10], [1, 17]], name: 'blah' },
+          { structure: '((...........(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 40, name: 'blub' },
+          { structure: '..........................', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 10, name: 'doh' }
         ];
-        // set all of the parameters
-        var padding = [10, 10]; //the padding between the grid rectangles
-        var margin = { top: 4, left: 4, bottom: 4, right: 4 };
-        var svgWidth = 418 - margin.left - margin.right; //the width of the svg
-        var cellWidth = 200; //the width of each cell
-        var cellHeight = 200; //the height of each cell
+        // set all the parameters
+        const padding = [10, 10]; //the padding between the grid rectangles
+        const margin = { top: 4, left: 4, bottom: 4, right: 4 };
+        const svgWidth2 = 418 - margin.left - margin.right; //the width of the svg
+        const cellWidth = 200; //the width of each cell
+        const cellHeight = 200; //the height of each cell
         // calculate the number of columns and the height of the SVG,
-        // which is dependent on the on the number of data points
-        var numCols = Math.floor((svgWidth + padding[0]) / (cellWidth + padding[0]));
-        var svgHeight =
-          Math.ceil(gridData.length / numCols) * (cellHeight + padding[1]) -
-          padding[1] +
-          margin.bottom;
-        var chart = fornac.rnaPlot().width(cellWidth).height(cellHeight);
-        var rectGrid = d3.layout
-          .grid()
+        // which is dependent on the number of data points
+        const numCols = Math.floor((svgWidth2 + padding[0]) / (cellWidth + padding[0]));
+        const svgHeight2 = Math.ceil(gridData.length / numCols) * (cellHeight + padding[1]) - padding[1] + margin.bottom;
+
+        const gridChart = rnaPlot().width(cellWidth).height(cellHeight);
+
+        const rectGrid = d3.layout.grid()
           .bands()
-          .size([svgWidth, svgHeight])
+          .size([svgWidth2, svgHeight2])
           .cols(numCols)
           .padding(padding)
           .nodeSize([cellWidth, cellHeight]);
-        var rectData = rectGrid(gridData);
-        // create an svg as a child of the #rna_ss div
-        // and then a g for each grid cell
-        var svg = d3
-          .select('#rna_rgl')
+
+        const rectData = rectGrid(gridData);
+
+        const gridSvg = d3.select('#rna_rgl')
           .append('svg')
           .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr(
-            'viewBox',
-            '0 0 ' +
-              (svgWidth + margin.left + margin.right) +
-              ' ' +
-              (svgHeight + margin.top + margin.bottom),
-          )
+          .attr('viewBox', `0 0 ${svgWidth2 + margin.left + margin.right} ${svgHeight2 + margin.top + margin.bottom}`)
           .append('g')
-          .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-        var gZoom = svg
-          .append('g')
+          .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const zoom = () => {
+          zoomContainer.attr('transform', `translate(${d3.event.translate})scale(${d3.event.scale})`);
+        };
+
+        const gZoom = gridSvg.append('g')
           .call(d3.behavior.zoom().scaleExtent([1, gridData.length]).on('zoom', zoom));
-        gZoom
-          .append('rect')
+
+        gZoom.append('rect')
           .attr('class', 'overlay')
-          .attr('width', svgWidth)
-          .attr('height', svgHeight);
-        svg = svg.append('g');
-        function zoom() {
-          svg.attr(
-            'transform',
-            'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')',
-          );
-        }
-        svg
-          .selectAll('.rna-cell')
+          .attr('width', svgWidth2)
+          .attr('height', svgHeight2);
+
+        const zoomContainer = gridSvg.append('g');
+
+        zoomContainer.selectAll('.rna-cell')
           .data(rectData)
           .enter()
           .append('g')
-          .attr('transform', function (d) {
-            return 'translate(' + d.x + ',' + d.y + ')';
-          })
+          .attr('transform', d => `translate(${d.x},${d.y})`)
           .classed('rna-cell', true)
-          .call(chart);
-      </script>
-      <script type="text/javascript">
-        var svgWidth = 200;
-        var svgHeight = 200;
+          .call(gridChart);
 
-        var timeData = [
+
+        // --- SECTION 3: TIME SLIDER ---
+        const svgWidth3 = 200;
+        const svgHeight3 = 200;
+
+        const timeData = [
           { structure: '((((....))))..', sequence: 'AGCUUUGAAGCUUA', name: 't0' },
           { structure: '.(((....)))...', sequence: 'AGCUUUGAAGCUUA', name: 't1' },
           { structure: '..((....))....', sequence: 'AGCUUUGAAGCUUA', name: 't2' },
@@ -204,40 +169,41 @@
           { structure: '..............', sequence: 'AGCUUUGAAGCUUA', name: 't4' },
         ];
 
-        var timeChart = fornac
-          .rnaPlot()
-          .width(svgWidth)
-          .height(svgHeight)
+        const timeChart = rnaPlot()
+          .width(svgWidth3)
+          .height(svgHeight3)
           .rnaLayout('simple')
           .namePosition('0 0')
           .startNucleotideNumber(10)
           .labelInterval(0);
 
-        var timeSVG = d3
-          .select('#rna_rpt')
+        // currentSlide now stores the ID string (e.g., "t0")
+        let currentSlideId = timeData[0].name;
+
+        d3.select('#rna_rpt')
           .selectAll('svg')
           .data(timeData)
           .enter()
           .append('div')
-          .classed('svg-container stacked', true)
-          .classed('transparent', true)
-          .attr('id', (d) => {
-            return d.name;
-          })
+          .classed('svg-container stacked transparent', true)
+          .attr('id', d => d.name)
           .append('svg')
           .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr('viewBox', '0 0 ' + svgWidth + ' ' + svgHeight)
+          .attr('viewBox', `0 0 ${svgWidth3} ${svgHeight3}`)
           .call(timeChart);
 
-        var sliderChange = (value) => {
-          let plotid = '#' + timeData[value].name;
-          $(currentSlide).addClass('transparent');
-          $(plotid).removeClass('transparent');
-          currentSlide = plotid;
+        // Expose the slider function to window
+        window.sliderChange = (value) => {
+          const nextSlideId = timeData[value].name;
+
+          document.getElementById(currentSlideId).classList.add('transparent');
+          document.getElementById(nextSlideId).classList.remove('transparent');
+
+          currentSlideId = nextSlideId;
         };
 
-        var currentSlide = '#' + timeData[0].name;
-        $(currentSlide).removeClass('transparent');
+        // Set initial state
+        document.getElementById(currentSlideId).classList.remove('transparent');
       </script>
     </div>
   </body>

@@ -16,12 +16,12 @@
     "dist"
   ],
   "type": "module",
-  "main": "dist/fornac.umd.js",
-  "module": "dist/fornac.js",
+  "main": "dist/fornac.esm.js",
+  "module": "dist/fornac.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/fornac.js",
-      "require": "./dist/fornac.umd.js"
+      "import": "./src/index.js",
+      "require": "./dist/fornac.esm.js"
     },
     "./style.css": "./dist/fornac.css"
   },
@@ -33,7 +33,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check"
   },
-  "dependencies": {
+  "peerDependencies": {
     "d3": "~3.5.13"
   },
   "devDependencies": {

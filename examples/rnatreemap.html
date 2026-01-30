@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>RNAtreemap Examples</title>
-    <link rel="stylesheet" href="fornac.css" />
     <style>
       svg {
         width: 100%;
@@ -36,9 +35,9 @@
       <div id="rna_tmg" class="svg-container-grid"></div>
 
       <script src="https://unpkg.com/d3@3.5"></script>
-      <script src="fornac.js"></script>
+      <script type="module">
+        import { rnaTreemap } from 'fornac';
 
-      <script type="text/javascript">
         let testData = [
           {
             name: 'graph',
@@ -68,8 +67,7 @@
         var svgWidth = 400;
         var svgHeight = 100;
 
-        var chart = fornac
-          .rnaTreemap()
+        var chart = rnaTreemap()
           .rnaLayout('simple')
           .rnaEdgePadding(5)
           .namePosition('0 0')
@@ -144,8 +142,7 @@
         var svgWidth = 200;
         var svgHeight = 200;
 
-        var chart = fornac
-          .rnaTreemap()
+       var chart = rnaTreemap()
           .rnaLayout('simple')
           .rnaEdgePadding(5)
           .namePosition('0 0')
@@ -154,7 +151,7 @@
           .width(svgWidth)
           .height(svgHeight);
 
-        var svg = d3
+       var svg = d3
           .select('#rna_tmg')
           .selectAll('.div')
           .data(multiData)
