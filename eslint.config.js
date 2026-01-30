@@ -9,11 +9,11 @@ export default [
       sourceType: 'module',
       globals: {
         ...globals.browser,
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
     rules: {
-      quotes: ['error', 'single']
-    }
-  }
+      quotes: ['error', 'single'],
+    },
+  },
 ];

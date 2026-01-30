@@ -6,34 +6,34 @@ FornaContainer provides a simple way to display RNA secondary structures on web 
 
 Below is an example of a simple web page that uses FornaContainer to display a simple RNA molecule:
 
-![FornaContainer Example](doc/img/forna-container-screenshot.png "An example of the FornaContainer")
+![FornaContainer Example](doc/img/forna-container-screenshot.png 'An example of the FornaContainer')
 
 The code is straightforward. After importing the necessary JavaScript files, create a container with `new FornaContainer("#rna_ss", {'animation': false})`, passing `#rna_ss` as the ID of the div that will hold the container. Then populate it with a structure and sequence using `container.addRNA`:
 
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <link rel='stylesheet' type='text/css' href='fornac.css' />
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="fornac.css" />
+  </head>
+  <body>
     This is an RNA container.
-    <div id='rna_ss'></div>
+    <div id="rna_ss"></div>
     This is after the RNA container.
 
-    <script type='text/javascript' src='fornac.js'></script>
-    <script type='text/javascript'>
-        var container = new FornaContainer("#rna_ss", {'animation': false});
+    <script type="text/javascript" src="fornac.js"></script>
+    <script type="text/javascript">
+      var container = new FornaContainer('#rna_ss', { animation: false });
 
-        var options = {
-            'structure': '((..((....)).(((....))).))',
-            'sequence': 'CGCUUCAUAUAAUCCUAAUGACCUAU'
-        };
+      var options = {
+        structure: '((..((....)).(((....))).))',
+        sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
+      };
 
-        container.addRNA(options.structure, options);
+      container.addRNA(options.structure, options);
     </script>
-</body>
+  </body>
 </html>
 ```
 
@@ -41,22 +41,22 @@ The code is straightforward. After importing the necessary JavaScript files, cre
 
 Display two cofolded sequences using the format from [RNAcofold](http://rna.tbi.univie.ac.at/cgi-bin/RNAcofold.cgi):
 
-![Cofolded sequences](doc/img/cofold_example.png "An example of cofolded sequences displayed using FornaContainer")
+![Cofolded sequences](doc/img/cofold_example.png 'An example of cofolded sequences displayed using FornaContainer')
 
 ```javascript
-var container = new fornac.FornaContainer("#cofold_ss", {
-    'animation': false, 
-    'zoomable': true, 
-    'initialSize': [500, 300]
+var container = new fornac.FornaContainer('#cofold_ss', {
+  animation: false,
+  zoomable: true,
+  initialSize: [500, 300],
 });
-                                                     
+
 var options = {
-    'structure': '..((((...))))...((...((...((..&............))...))...))..',
-    'sequence': 'ACGAUCAGAGAUCAGAGCAUACGACAGCAG&ACGAAAAAAAGAGCAUACGACAGCAG'
+  structure: '..((((...))))...((...((...((..&............))...))...))..',
+  sequence: 'ACGAUCAGAGAUCAGAGCAUACGACAGCAG&ACGAAAAAAAGAGCAUACGACAGCAG',
 };
 
 container.addRNA(options.structure, options);
-container.setSize(); 
+container.setSize();
 ```
 
 ## Programmatic Use
@@ -64,7 +64,7 @@ container.setSize();
 ### Extracting the Secondary Structure (Dot-Bracket String)
 
 ```javascript
-fornac.getStructuresDotBracket()
+fornac.getStructuresDotBracket();
 ```
 
 Returns a dot-bracket representation of the visible structure. This is useful when integrating this component with structure editing functionality. Returns an array of length 2, for example: `['CCCCAAAAGGGG', '((((....))))']`.

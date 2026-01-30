@@ -10,28 +10,28 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.js'),
       name: 'fornac',
-      fileName: (format) => format === 'umd' ? 'fornac.js' : 'fornac.esm.js',
-      formats: ['umd', 'es']
+      fileName: (format) => (format === 'umd' ? 'fornac.js' : 'fornac.esm.js'),
+      formats: ['umd', 'es'],
     },
     rollupOptions: {
       external: ['d3'],
       output: {
         globals: { d3: 'd3' },
-        assetFileNames: 'fornac.[ext]'
-      }
+        assetFileNames: 'fornac.[ext]',
+      },
     },
     sourcemap: true,
-    cssCodeSplit: false
+    cssCodeSplit: false,
   },
   css: {
     modules: {
       localsConvention: 'camelCase',
-      generateScopedName: '[name]-[local]'
-    }
+      generateScopedName: '[name]-[local]',
+    },
   },
   server: {
     port: 9000,
-    open: '/examples/index.html'
+    open: '/examples/index.html',
   },
   plugins: [
     {
@@ -47,7 +47,7 @@ export default defineConfig({
           }
           next();
         });
-      }
-    }
-  ]
+      },
+    },
+  ],
 });
