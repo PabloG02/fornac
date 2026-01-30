@@ -5,7 +5,6 @@
 import fstyle from './fornac.module.css';
 
 import d3 from 'd3';
-import slugid from 'slugid';
 import {contextMenu} from './d3-context-menu.js';
 
 import {RNAGraph} from './rnagraph.js';
@@ -1298,7 +1297,7 @@ export function FornaContainer(element, passedOptions = {}) {
         console.log('newSequence:', newSequence);
 
         console.log('uids:', uids);
-        uids.splice(newNodeNum-1, 1, slugid.nice());
+        uids.splice(newNodeNum-1, 1, crypto.randomUUID());
         let newPositions = positions;
 
         delete self.rnas[rna.uid];
@@ -1325,7 +1324,7 @@ export function FornaContainer(element, passedOptions = {}) {
 
         console.log('newSequence:', newSequence);
 
-        uids.splice(newNodeNum, 0, slugid.nice());
+        uids.splice(newNodeNum, 0, crypto.randomUUID());
         positions.splice(newNodeNum, 0, positions[newNodeNum - positionOffset-1]);
 
         let newUids = uids;
@@ -1476,7 +1475,7 @@ export function FornaContainer(element, passedOptions = {}) {
                 {'source': rna1.nodes[toRemove[i].from-1],
                  'target': rna2.nodes[toRemove[i].to-1],
                  'value': 1,
-                 'uid': slugid.nice(),
+                 'uid': crypto.randomUUID(),
                  'linkType': 'intermolecule'});
                 recalculateGraph();
                 self.update();
@@ -1644,7 +1643,7 @@ export function FornaContainer(element, passedOptions = {}) {
                 'source': toAddExternal[i].source,
                 'target': newRna.nodes[toAddExternal[i].target-1],
                 'value': 1,
-                'uid': slugid.nice(),
+                'uid': crypto.randomUUID(),
                 'linkType': 'intermolecule'
             });
         }
@@ -1683,7 +1682,7 @@ export function FornaContainer(element, passedOptions = {}) {
                 return;
 
             if (mouseupNode == mousedownNode) { resetMouseVars(); return; }
-            let newLink = {source: mousedownNode, target: mouseupNode, linkType: 'basepair', value: 1, uid: slugid.nice()};
+            let newLink = {source: mousedownNode, target: mouseupNode, linkType: 'basepair', value: 1, uid: crypto.randomUUID()};
 
             for (let i = 0; i < self.graph.links.length; i++) {
                 if ((self.graph.links[i].source == mousedownNode)  ||
@@ -2060,7 +2059,7 @@ export function FornaContainer(element, passedOptions = {}) {
         let newLinks = [];
 
         for (let i = 0; i < externalLinks.length; i++) {
-            let newLink = {linkType: 'external', value: 1, uid: slugid.nice(),
+            let newLink = {linkType: 'external', value: 1, uid: crypto.randomUUID(),
                 source: null, target: null};
             // check if the source node is an array
             if (Object.prototype.toString.call(externalLinks[i][0]) === '[object Array]') {
