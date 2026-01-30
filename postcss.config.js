@@ -1,5 +1,5 @@
 export default {
   plugins: {
-    'postcss-modules-values': {}
-  }
+    'postcss-modules-values': {},
+  },
 };
