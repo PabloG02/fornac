@@ -22,11 +22,13 @@ The code is straightforward. After importing the necessary JavaScript files, cre
     <div id="rna_ss"></div>
     This is after the RNA container.
 
-    <script type="text/javascript" src="fornac.js"></script>
-    <script type="text/javascript">
-      var container = new FornaContainer('#rna_ss', { animation: false });
+    <script src="https://unpkg.com/d3@3.5"></script>
+    <script type="module">
+      import { FornaContainer } from './fornac.esm.js';
 
-      var options = {
+      const container = new FornaContainer('#rna_ss', { animation: false });
+
+      const options = {
         structure: '((..((....)).(((....))).))',
         sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
       };
@@ -44,13 +46,15 @@ Display two cofolded sequences using the format from [RNAcofold](http://rna.tbi.
 ![Cofolded sequences](doc/img/cofold_example.png 'An example of cofolded sequences displayed using FornaContainer')
 
 ```javascript
-var container = new fornac.FornaContainer('#cofold_ss', {
+import { FornaContainer } from '@pablog02/fornac';
+
+const container = new FornaContainer('#cofold_ss', {
   animation: false,
   zoomable: true,
   initialSize: [500, 300],
 });
 
-var options = {
+const options = {
   structure: '..((((...))))...((...((...((..&............))...))...))..',
   sequence: 'ACGAUCAGAGAUCAGAGCAUACGACAGCAG&ACGAAAAAAAGAGCAUACGACAGCAG',
 };
@@ -64,7 +68,7 @@ container.setSize();
 ### Extracting the Secondary Structure (Dot-Bracket String)
 
 ```javascript
-fornac.getStructuresDotBracket();
+container.getStructuresDotBracket();
 ```
 
 Returns a dot-bracket representation of the visible structure. This is useful when integrating this component with structure editing functionality. Returns an array of length 2, for example: `['CCCCAAAAGGGG', '((((....))))']`.
@@ -169,7 +173,7 @@ npm run dev
 npm run build
 ```
 
-The output will be placed in the `dist` directory. To use fornac in a web page, include `dist/fornac.js` and the CSS stylesheet `dist/fornac.css`.
+The output will be placed in the `dist` directory. To use fornac in a web page, include `dist/fornac.esm.js` and the CSS stylesheet `dist/fornac.css`.
 
 ## Acknowledgements
 
