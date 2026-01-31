@@ -1,28 +1,30 @@
 <!doctype html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tiny Example</title>
+    <link rel="stylesheet" href="examples.css" />
   </head>
   <body>
-    <div style="max-width: 800px; margin: auto">
-      <h3>Tiny Example</h3>
+    <main>
+      <h1>Tiny Example</h1>
 
-      This is an RNA container.
-      <div id="rna_ss"></div>
-      This after the RNA container.
+      <p>This is an RNA container.</p>
+      <div id="rna_ss" class="demo-container"></div>
+      <p>This after the RNA container.</p>
+    </main>
 
-      <script src="https://unpkg.com/d3@3.5"></script>
-      <script type="module">
-        import { FornaContainer } from '@pablog02/fornac';
+    <script src="https://unpkg.com/d3@3.5"></script>
+    <script type="module">
+      import { FornaContainer } from '@pablog02/fornac';
 
-        var container = new FornaContainer('#rna_ss', { animation: true, zoomable: true });
+      var container = new FornaContainer('#rna_ss', { animation: true, zoomable: true });
 
-        var options = { structure: '(())', sequence: 'AACG' };
+      var options = { structure: '(())', sequence: 'AACG' };
 
-        container.addRNA(options.structure, options);
-        container.setSize(300, 300);
-      </script>
-    </div>
+      container.addRNA(options.structure, options);
+      container.setSize(300, 300);
+    </script>
   </body>
 </html>

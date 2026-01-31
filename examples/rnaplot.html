@@ -1,57 +1,22 @@
 <!doctype html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RNAPlot Examples</title>
-    <style>
-      svg {
-        width: 100%;
-        height: 100%;
-        max-width: 300px;
-        border: 1px solid gray;
-      }
-
-      .svg-container {
-        max-width: 200px;
-        margin-right: 10px;
-        margin-top: 5px;
-        float: left;
-      }
-
-      .svg-container-grid:after {
-        content: '';
-        display: table;
-        clear: both;
-      }
-
-      .slider {
-        max-width: 100px;
-        margin: 10px;
-      }
-
-      .transparent {
-        visibility: collapse;
-      }
-
-      .stacked {
-        position: absolute;
-      }
-
-      .overlay {
-        fill: transparent;
-      }
-    </style>
+    <link rel="stylesheet" href="examples.css" />
   </head>
   <body>
-    <div style="max-width: 800px; margin: auto">
-      <h3>RNAPlot Examples</h3>
-      RNAplot Examples:
+    <main>
+      <h1>RNAPlot Examples</h1>
+
+      <h3>RNAplot Examples:</h3>
       <div id="rna_ss" class="svg-container-grid"></div>
 
-      RNAplot Grid Example:
-      <div id="rna_rgl" class="svg-container-grid"></div>
+      <h3>RNAplot Grid Example:</h3>
+      <div id="rna_rgl" class="svg-container-grid" style="max-width: 400px;"></div>
 
-      RNAplot Timeseries Example:
+      <h3>RNAplot Timeseries Example:</h3>
       <div class="slidecontainer">
         <input
           type="range"
@@ -64,147 +29,157 @@
         />
       </div>
       <div id="rna_rpt" class="svg-container-grid"></div>
+    </main>
 
-      <script src="https://unpkg.com/d3@3.5"></script>
-      <script src="https://unpkg.com/d3-grid"></script>
-      <script type="module">
-        import { rnaPlot } from '@pablog02/fornac';
+    <script src="https://unpkg.com/d3@3.5"></script>
+    <script src="https://unpkg.com/d3-grid"></script>
+    <script type="module">
+      import { rnaPlot } from '@pablog02/fornac';
 
-        // --- SECTION 1: RNA Secondary Structure ---
-        const svgWidth1 = 200;
-        const svgHeight1 = 200;
+      // --- SECTION 1: RNA Secondary Structure ---
+      const svgWidth1 = 200;
+      const svgHeight1 = 200;
 
-        const rnaData1 = [
-          { structure: '((..((....)).(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', name: 'RNA1' },
-          { structure: '((((....))))', sequence: 'AGGCUGUAGCUU', name: 'RNA2' }
-        ];
+      const rnaData1 = [
+        { structure: '((..((....)).(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', name: 'RNA1' },
+        { structure: '((((....))))', sequence: 'AGGCUGUAGCUU', name: 'RNA2' },
+      ];
 
-        const chart1 = rnaPlot()
-          .width(svgWidth1)
-          .height(svgHeight1)
-          .rnaLayout('simple')
-          .namePosition('0 0')
-          .startNucleotideNumber(10)
-          .labelInterval(5);
+      const chart1 = rnaPlot()
+        .width(svgWidth1)
+        .height(svgHeight1)
+        .rnaLayout('simple')
+        .namePosition('0 0')
+        .startNucleotideNumber(10)
+        .labelInterval(5);
 
-        d3.select('#rna_ss')
-          .selectAll('svg')
-          .data(rnaData1)
-          .enter()
-          .append('div')
-          .classed('svg-container', true)
-          .append('svg')
-          .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr('viewBox', `0 0 ${svgWidth1} ${svgHeight1}`)
-          .call(chart1);
+      d3.select('#rna_ss')
+        .selectAll('svg')
+        .data(rnaData1)
+        .enter()
+        .append('div')
+        .classed('svg-container', true)
+        .append('svg')
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .attr('viewBox', `0 0 ${svgWidth1} ${svgHeight1}`)
+        .call(chart1);
 
+      // --- SECTION 2: GRID LAYOUT ---
+      const gridData = [
+        {
+          structure: '((..((....)).(((....))).))',
+          sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU',
+          size: 50,
+          extraLinks: [
+            [3, 10],
+            [1, 17],
+          ],
+          name: 'blah',
+        },
+        { structure: '((...........(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 40, name: 'blub' },
+        { structure: '..........................', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 10, name: 'doh' },
+      ];
+      // set all the parameters
+      const padding = [10, 10]; //the padding between the grid rectangles
+      const margin = { top: 4, left: 4, bottom: 4, right: 4 };
+      const svgWidth2 = 418 - margin.left - margin.right; //the width of the svg
+      const cellWidth = 200; //the width of each cell
+      const cellHeight = 200; //the height of each cell
+      // calculate the number of columns and the height of the SVG,
+      // which is dependent on the number of data points
+      const numCols = Math.floor((svgWidth2 + padding[0]) / (cellWidth + padding[0]));
+      const svgHeight2 =
+        Math.ceil(gridData.length / numCols) * (cellHeight + padding[1]) - padding[1] + margin.bottom;
 
-        // --- SECTION 2: GRID LAYOUT ---
-        const gridData = [
-          { structure: '((..((....)).(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 50, extraLinks: [[3, 10], [1, 17]], name: 'blah' },
-          { structure: '((...........(((....))).))', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 40, name: 'blub' },
-          { structure: '..........................', sequence: 'CGCUUCAUAUAAUCCUAAUGACCUAU', size: 10, name: 'doh' }
-        ];
-        // set all the parameters
-        const padding = [10, 10]; //the padding between the grid rectangles
-        const margin = { top: 4, left: 4, bottom: 4, right: 4 };
-        const svgWidth2 = 418 - margin.left - margin.right; //the width of the svg
-        const cellWidth = 200; //the width of each cell
-        const cellHeight = 200; //the height of each cell
-        // calculate the number of columns and the height of the SVG,
-        // which is dependent on the number of data points
-        const numCols = Math.floor((svgWidth2 + padding[0]) / (cellWidth + padding[0]));
-        const svgHeight2 = Math.ceil(gridData.length / numCols) * (cellHeight + padding[1]) - padding[1] + margin.bottom;
+      const gridChart = rnaPlot().width(cellWidth).height(cellHeight);
 
-        const gridChart = rnaPlot().width(cellWidth).height(cellHeight);
+      const rectGrid = d3.layout
+        .grid()
+        .bands()
+        .size([svgWidth2, svgHeight2])
+        .cols(numCols)
+        .padding(padding)
+        .nodeSize([cellWidth, cellHeight]);
 
-        const rectGrid = d3.layout.grid()
-          .bands()
-          .size([svgWidth2, svgHeight2])
-          .cols(numCols)
-          .padding(padding)
-          .nodeSize([cellWidth, cellHeight]);
+      const rectData = rectGrid(gridData);
 
-        const rectData = rectGrid(gridData);
+      const gridSvg = d3
+        .select('#rna_rgl')
+        .append('svg')
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .attr(
+          'viewBox',
+          `0 0 ${svgWidth2 + margin.left + margin.right} ${svgHeight2 + margin.top + margin.bottom}`
+        )
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
 
-        const gridSvg = d3.select('#rna_rgl')
-          .append('svg')
-          .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr('viewBox', `0 0 ${svgWidth2 + margin.left + margin.right} ${svgHeight2 + margin.top + margin.bottom}`)
-          .append('g')
-          .attr('transform', `translate(${margin.left},${margin.top})`);
+      const zoom = () => {
+        zoomContainer.attr('transform', `translate(${d3.event.translate})scale(${d3.event.scale})`);
+      };
 
-        const zoom = () => {
-          zoomContainer.attr('transform', `translate(${d3.event.translate})scale(${d3.event.scale})`);
-        };
+      const gZoom = gridSvg.append('g').call(d3.behavior.zoom().scaleExtent([1, gridData.length]).on('zoom', zoom));
 
-        const gZoom = gridSvg.append('g')
-          .call(d3.behavior.zoom().scaleExtent([1, gridData.length]).on('zoom', zoom));
+      gZoom.append('rect').attr('class', 'overlay').attr('width', svgWidth2).attr('height', svgHeight2);
 
-        gZoom.append('rect')
-          .attr('class', 'overlay')
-          .attr('width', svgWidth2)
-          .attr('height', svgHeight2);
+      const zoomContainer = gridSvg.append('g');
 
-        const zoomContainer = gridSvg.append('g');
+      zoomContainer
+        .selectAll('.rna-cell')
+        .data(rectData)
+        .enter()
+        .append('g')
+        .attr('transform', (d) => `translate(${d.x},${d.y})`)
+        .classed('rna-cell', true)
+        .call(gridChart);
 
-        zoomContainer.selectAll('.rna-cell')
-          .data(rectData)
-          .enter()
-          .append('g')
-          .attr('transform', d => `translate(${d.x},${d.y})`)
-          .classed('rna-cell', true)
-          .call(gridChart);
+      // --- SECTION 3: TIME SLIDER ---
+      const svgWidth3 = 200;
+      const svgHeight3 = 200;
 
+      const timeData = [
+        { structure: '((((....))))..', sequence: 'AGCUUUGAAGCUUA', name: 't0' },
+        { structure: '.(((....)))...', sequence: 'AGCUUUGAAGCUUA', name: 't1' },
+        { structure: '..((....))....', sequence: 'AGCUUUGAAGCUUA', name: 't2' },
+        { structure: '...(....).....', sequence: 'AGCUUUGAAGCUUA', name: 't3' },
+        { structure: '..............', sequence: 'AGCUUUGAAGCUUA', name: 't4' },
+      ];
 
-        // --- SECTION 3: TIME SLIDER ---
-        const svgWidth3 = 200;
-        const svgHeight3 = 200;
+      const timeChart = rnaPlot()
+        .width(svgWidth3)
+        .height(svgHeight3)
+        .rnaLayout('simple')
+        .namePosition('0 0')
+        .startNucleotideNumber(10)
+        .labelInterval(0);
 
-        const timeData = [
-          { structure: '((((....))))..', sequence: 'AGCUUUGAAGCUUA', name: 't0' },
-          { structure: '.(((....)))...', sequence: 'AGCUUUGAAGCUUA', name: 't1' },
-          { structure: '..((....))....', sequence: 'AGCUUUGAAGCUUA', name: 't2' },
-          { structure: '...(....).....', sequence: 'AGCUUUGAAGCUUA', name: 't3' },
-          { structure: '..............', sequence: 'AGCUUUGAAGCUUA', name: 't4' },
-        ];
+      // currentSlide now stores the ID string (e.g., "t0")
+      let currentSlideId = timeData[0].name;
 
-        const timeChart = rnaPlot()
-          .width(svgWidth3)
-          .height(svgHeight3)
-          .rnaLayout('simple')
-          .namePosition('0 0')
-          .startNucleotideNumber(10)
-          .labelInterval(0);
+      d3.select('#rna_rpt')
+        .selectAll('svg')
+        .data(timeData)
+        .enter()
+        .append('div')
+        .classed('svg-container stacked transparent', true)
+        .attr('id', (d) => d.name)
+        .append('svg')
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .attr('viewBox', `0 0 ${svgWidth3} ${svgHeight3}`)
+        .call(timeChart);
 
-        // currentSlide now stores the ID string (e.g., "t0")
-        let currentSlideId = timeData[0].name;
+      // Expose the slider function to window
+      window.sliderChange = (value) => {
+        const nextSlideId = timeData[value].name;
 
-        d3.select('#rna_rpt')
-          .selectAll('svg')
-          .data(timeData)
-          .enter()
-          .append('div')
-          .classed('svg-container stacked transparent', true)
-          .attr('id', d => d.name)
-          .append('svg')
-          .attr('preserveAspectRatio', 'xMidYMid meet')
-          .attr('viewBox', `0 0 ${svgWidth3} ${svgHeight3}`)
-          .call(timeChart);
+        document.getElementById(currentSlideId).classList.add('transparent');
+        document.getElementById(nextSlideId).classList.remove('transparent');
 
-        // Expose the slider function to window
-        window.sliderChange = (value) => {
-          const nextSlideId = timeData[value].name;
+        currentSlideId = nextSlideId;
+      };
 
-          document.getElementById(currentSlideId).classList.add('transparent');
-          document.getElementById(nextSlideId).classList.remove('transparent');
-
-          currentSlideId = nextSlideId;
-        };
-
-        // Set initial state
-        document.getElementById(currentSlideId).classList.remove('transparent');
-      </script>
-    </div>
+      // Set initial state
+      document.getElementById(currentSlideId).classList.remove('transparent');
+    </script>
   </body>
 </html>
