@@ -20,8 +20,7 @@
   "module": "dist/fornac.esm.js",
   "exports": {
     ".": {
-      "import": "./src/index.js",
-      "require": "./dist/fornac.esm.js"
+      "import": "./dist/fornac.esm.js"
     },
     "./style.css": "./dist/fornac.css"
   },

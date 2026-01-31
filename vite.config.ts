@@ -19,6 +19,11 @@ function getExampleEntries() {
 
 const libConfig: UserConfig = {
   root: '.',
+  resolve: {
+    alias: {
+      '@pablog02/fornac': resolve(__dirname, 'src/index.js'),
+    },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -53,6 +58,11 @@ const examplesConfig: UserConfig = {
   root: 'examples',
   base: '',
   publicDir: false,
+  resolve: {
+    alias: {
+      '@pablog02/fornac': resolve(__dirname, 'src/index.js'),
+    },
+  },
   build: {
     outDir: '../dist-examples',
     emptyOutDir: true,
