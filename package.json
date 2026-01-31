@@ -18,9 +18,11 @@
   "type": "module",
   "main": "dist/fornac.esm.js",
   "module": "dist/fornac.esm.js",
+  "types": "dist/fornac.esm.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/fornac.esm.js"
+      "import": "./dist/fornac.esm.js",
+      "types": "./dist/fornac.esm.d.ts"
     },
     "./style.css": "./dist/fornac.css"
   },
