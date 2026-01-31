@@ -1,56 +1,58 @@
 <!doctype html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>External-Links Example</title>
+    <link rel="stylesheet" href="examples.css" />
   </head>
   <body>
-    <div style="max-width: 800px; margin: auto">
-      <h3>External-Links Example</h3>
+    <main>
+      <h1>External-Links Example</h1>
 
-      This is an RNA container.
-      <div id="rna_ss"></div>
-      This after the RNA container.
+      <p>This is an RNA container.</p>
+      <div id="rna_ss" class="demo-container"></div>
+      <p>This after the RNA container.</p>
+    </main>
 
-      <script src="https://unpkg.com/d3@3.5"></script>
-      <script type="module">
-        import { FornaContainer } from '@pablog02/fornac';
+    <script src="https://unpkg.com/d3@3.5"></script>
+    <script type="module">
+      import { FornaContainer } from '@pablog02/fornac';
 
-        var container = new FornaContainer('#rna_ss', { animation: true, zoomable: true });
+      var container = new FornaContainer('#rna_ss', { animation: true, zoomable: true });
 
-        var options = {
-          structure: '..((..((...[)).(((..].))).))..',
-          sequence: 'AACGCUUCAUAUAAUCCUAAUGACCUAUAA',
-          extraLinks: [
-            [
-              [3, 4, 27, 28],
-              [7, 8, 13, 14],
-            ],
-            [
-              [4, 5, 6, 7, 14, 15, 16, 25, 26, 27],
-              [8, 9, 10, 11, 12, 13],
-            ],
-            [22, 29],
+      var options = {
+        structure: '..((..((...[)).(((..].))).))..',
+        sequence: 'AACGCUUCAUAUAAUCCUAAUGACCUAUAA',
+        extraLinks: [
+          [
+            [3, 4, 27, 28],
+            [7, 8, 13, 14],
           ],
-          //'extraLinks': [[[4, 5, 6, 7, 14, 15, 16, 25, 26, 27],[8,9,10,11,12,13]],[[3,4,27,28],[7,8,13,14]]]
-          //'extraLinks': [[[4, 5, 6, 7, 14, 15, 16, 25, 26, 27],[8,9,10,11,12,13]]]
-          //'extraLinks': [[5,19],[6,20]]
-          //'extraLinks': [[5,19]]
-        };
-        /*
+          [
+            [4, 5, 6, 7, 14, 15, 16, 25, 26, 27],
+            [8, 9, 10, 11, 12, 13],
+          ],
+          [22, 29],
+        ],
+        //'extraLinks': [[[4, 5, 6, 7, 14, 15, 16, 25, 26, 27],[8,9,10,11,12,13]],[[3,4,27,28],[7,8,13,14]]]
+        //'extraLinks': [[[4, 5, 6, 7, 14, 15, 16, 25, 26, 27],[8,9,10,11,12,13]]]
+        //'extraLinks': [[5,19],[6,20]]
+        //'extraLinks': [[5,19]]
+      };
+      /*
         var options = {'structure': '...',
                         'sequence': 'AAA',
                         'extraLinks': [[1,3]]
         };
 */
-        /*
+      /*
         var options = {'structure': '((...)).',
             'sequence':             'CCCCCCCC'
         };
 */
 
-        container.addRNA(options.structure, options);
-      </script>
-    </div>
+      container.addRNA(options.structure, options);
+    </script>
   </body>
 </html>

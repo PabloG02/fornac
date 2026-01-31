@@ -1,0 +1,146 @@
+/* Shared styles for Fornac examples */
+
+:root {
+    --primary-color: #007bff;
+    --text-color: #333;
+    --bg-color: #fff;
+    --border-color: #ccc;
+    --container-max-width: 900px;
+    --gap-md: 20px;
+    --gap-sm: 10px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+main {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: var(--gap-md);
+}
+
+h1, h2, h3, h4 {
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+h1 { font-size: 2rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem; }
+h3 { font-size: 1.25rem; }
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ul {
+    padding-left: 1.5rem;
+}
+
+/* Container for demo visualizations */
+.demo-container {
+    border: 1px solid #eee;
+    background: #fdfdfd;
+    min-height: 200px;
+    margin-bottom: var(--gap-md);
+}
+
+/* Form controls and options */
+.options-form {
+    background: #f4f4f4;
+    padding: var(--gap-sm);
+    border-radius: 4px;
+    margin-bottom: var(--gap-md);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-sm);
+    align-items: center;
+}
+
+.options-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+textarea {
+    width: 100%;
+    font-family: monospace;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Specific classes from original files */
+.svg-container {
+    max-width: 200px; /* Matched from rnaplot/rnatreemap */
+    margin-right: 10px;
+    margin-top: 5px;
+    float: left;
+}
+
+.svg-container svg,
+.svg-container-grid svg {
+    width: 100%;
+    height: 100%;
+    border: 1px solid gray;
+}
+
+/*.svg-container-grid svg {*/
+/*    max-width: 300px;*/
+/*}*/
+
+.slider {
+    max-width: 100px;
+    margin: 10px;
+}
+
+/* Clearing floats */
+.clearfix::after,
+.svg-container-grid::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Utilities */
+.overlay {
+  fill: transparent;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.transparent {
+    visibility: collapse;
+}
+
+.stacked {
+    position: absolute;
+}

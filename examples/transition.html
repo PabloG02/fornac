@@ -1,19 +1,24 @@
-<!DOCTYPE html>
-<html lang="">
-<head>
-  <meta charset="utf-8">
-  <title>Transition Example</title>
-</head>
-<body>
-    <div style="max-width: 800px; margin: auto;">
-    <h3>Transition Example</h3>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transition Example</title>
+    <link rel="stylesheet" href="examples.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Transition Example</h1>
 
-    This is an RNA container.
-    <div id='rna_ss'> </div>
-    This after the RNA container.
+      <p>This is an RNA container.</p>
+      <div id="rna_ss" class="demo-container"></div>
+      <p>This after the RNA container.</p>
 
-    <br/><button onclick="reset()">Reset</button>
-    <br/><button onclick="step1()">Start</button>
+      <div class="options-form">
+        <button onclick="reset()">Reset</button>
+        <button onclick="step1()">Start</button>
+      </div>
+    </main>
 
     <script src="https://unpkg.com/d3@3.5"></script>
     <script type="module">
@@ -24,13 +29,12 @@
         '...(....)...',
         '..((....))...',
         '.(((....)))...',
-        '((((....))))...'
+        '((((....))))...',
       ];
 
       const funcs = [];
 
-      let container = new FornaContainer("#rna_ss",
-          {'animation': false, 'zoomable': true});
+      let container = new FornaContainer('#rna_ss', { animation: false, zoomable: true });
       container.displayNumbering(false);
       container.displayDirectionArrows(false);
 
@@ -45,6 +49,5 @@
 
       window.step1();
     </script>
-</div>
-</body>
+  </body>
 </html>

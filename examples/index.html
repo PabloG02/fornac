@@ -1,39 +1,44 @@
 <!doctype html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fornac Examples</title>
+    <link rel="stylesheet" href="examples.css" />
   </head>
   <body>
-    <div style="max-width: 800px; margin: auto">
-      <h3>Examples</h3>
+    <main>
+      <h1>Fornac Examples</h1>
+      
+      <nav>
+        <ul>
+          <li><a href="demo.html">Fornac Examples</a></li>
+          <li><a href="edit-structure.html">Forna RNA Editor</a></li>
+          <li><a href="multi-strand.html">Multi-Strand Example</a></li>
+          <li><a href="external-links.html">External-Links Example</a></li>
+          <li><a href="tiny-structure.html">Tiny Example</a></li>
+          <li><a href="transition.html">Transition Example</a></li>
+          <li><a href="rnaplot.html">RNAplot Examples</a></li>
+          <li><a href="rnatreemap.html">RNAtreemap Examples</a></li>
+        </ul>
+      </nav>
 
-      <ul>
-        <li><a href="demo.html">Fornac Examples</a></li>
-        <li><a href="edit-structure.html">Forna RNA Editor</a></li>
-        <li><a href="multi-strand.html">Multi-Strand Example</a></li>
-        <li><a href="external-links.html">External-Links Example</a></li>
-        <li><a href="tiny-structure.html">Tiny Example</a></li>
-        <li><a href="transition.html">Transition Example</a></li>
-        <li><a href="rnaplot.html">RNAplot Examples</a></li>
-        <li><a href="rnatreemap.html">RNAtreemap Examples</a></li>
-      </ul>
+      <h2>Basic Demo</h2>
+      <div id="rna_ss" class="demo-container"></div>
+    </main>
 
-      <div id="rna_ss"></div>
+    <script src="https://unpkg.com/d3@3.5"></script>
+    <script type="module">
+      import { FornaContainer } from '@pablog02/fornac';
 
-      <script src="https://unpkg.com/d3@3.5"></script>
-      <script type="module">
-        import { FornaContainer } from '@pablog02/fornac';
+      let container = new FornaContainer('#rna_ss', { animation: false, zoomable: true });
 
-        let container = new FornaContainer('#rna_ss', { animation: false, zoomable: true });
-
-        let options = {
-          structure: '..((..((...[)).(((..].))).))..',
-          sequence: 'AACGCUUCAUAUAAUCCUAAUGACCUAUAA',
-        };
-        container.addRNA(options.structure, options);
-        container.setSize(200, 200);
-      </script>
-    </div>
+      let options = {
+        structure: '..((..((...[)).(((..].))).))..',
+        sequence: 'AACGCUUCAUAUAAUCCUAAUGACCUAUAA',
+      };
+      container.addRNA(options.structure, options);
+      container.setSize(200, 200);
+    </script>
   </body>
 </html>
