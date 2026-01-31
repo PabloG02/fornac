@@ -1,6 +1,6 @@
 import { defineConfig, UserConfig } from 'vite';
 import { resolve } from 'path';
-import { readdirSync } from 'fs';
+import { copyFileSync, readdirSync } from 'fs';
 
 // Get all HTML files from examples directory for examples build
 function getExampleEntries() {
@@ -19,6 +19,20 @@ function getExampleEntries() {
 
 const libConfig: UserConfig = {
   root: '.',
+  plugins: [
+    {
+      name: 'copy-types',
+      closeBundle() {
+        // This hook runs after the build is complete.
+        // Copies the manual type definitions to the dist folder.
+        const srcPath = resolve(__dirname, 'src/index.d.ts');
+        const destPath = resolve(__dirname, 'dist/fornac.esm.d.ts');
+
+        console.log(`[copy-types] Copying ${srcPath} to ${destPath}`);
+        copyFileSync(srcPath, destPath);
+      }
+    }
+  ],
   resolve: {
     alias: {
       '@pablog02/fornac': resolve(__dirname, 'src/index.js'),
