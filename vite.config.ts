@@ -1,4 +1,4 @@
-import {defineConfig, UserConfig} from 'vite';
+import { defineConfig, UserConfig } from 'vite';
 import { resolve } from 'path';
 import { readdirSync } from 'fs';
 
@@ -7,7 +7,7 @@ function getExampleEntries() {
   const examplesDir = resolve(__dirname, 'examples');
   const entries = {};
 
-  readdirSync(examplesDir).forEach(file => {
+  readdirSync(examplesDir).forEach((file) => {
     if (file.endsWith('.html')) {
       const name = file.replace('.html', '');
       entries[name] = resolve(examplesDir, file);
