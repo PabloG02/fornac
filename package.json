@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:examples": "vite build --mode examples",
     "preview": "vite preview",
     "lint": "eslint src/**/*.js test/**/*.js",
     "fmt": "oxfmt",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/node": "^25.1.0",
     "eslint": "^9.39.2",
     "globals": "^17.2.0",
     "oxfmt": "^0.27.0",
