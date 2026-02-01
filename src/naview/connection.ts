@@ -5,16 +5,16 @@ export class Connection {
   private loop: Loop = new Loop();
   private region: Region = new Region();
   // Start and end form the 1st base pair of the region.
-  private start: number | null = null;
-  private end: number | null = null;
-  private xrad: number | null = null;
-  private yrad: number | null = null;
-  private angle: number | null = null;
+  private start: number = 0;
+  private end: number = 0;
+  private xrad: number = 0;
+  private yrad: number = 0;
+  private angle: number = 0;
   // True if segment between this connection and the
   // next must be extruded out of the circle
-  private extruded: boolean | null = null;
+  private extruded: boolean = false;
   // True if the extruded segment must be drawn long.
-  private broken: boolean | null = null;
+  private broken: boolean = false;
 
   private _isNull: boolean = false;
 
@@ -42,7 +42,7 @@ export class Connection {
     this.region = region;
   }
 
-  getStart(): number | null {
+  getStart(): number {
     return this.start;
   }
 
@@ -50,7 +50,7 @@ export class Connection {
     this.start = start;
   }
 
-  getEnd(): number | null {
+  getEnd(): number {
     return this.end;
   }
 
@@ -58,7 +58,7 @@ export class Connection {
     this.end = end;
   }
 
-  getXrad(): number | null {
+  getXrad(): number {
     return this.xrad;
   }
 
@@ -66,7 +66,7 @@ export class Connection {
     this.xrad = xrad;
   }
 
-  getYrad(): number | null {
+  getYrad(): number {
     return this.yrad;
   }
 
@@ -74,7 +74,7 @@ export class Connection {
     this.yrad = yrad;
   }
 
-  getAngle(): number | null {
+  getAngle(): number {
     return this.angle;
   }
 
@@ -82,7 +82,7 @@ export class Connection {
     this.angle = angle;
   }
 
-  isExtruded(): boolean | null {
+  isExtruded(): boolean {
     return this.extruded;
   }
 
@@ -90,7 +90,7 @@ export class Connection {
     this.extruded = extruded;
   }
 
-  isBroken(): boolean | null {
+  isBroken(): boolean {
     return this.broken;
   }
 

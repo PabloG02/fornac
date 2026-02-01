@@ -1,16 +1,16 @@
 import { Connection } from './connection.js';
 
 export class Loop {
-  private nconnection: number | null = null;
+  private nconnection: number = 0;
   private _connections: Connection[] = [];
-  private number: number | null = null;
-  private depth: number | null = null;
-  private mark: boolean | null = null;
-  private x: number | null = null;
-  private y: number | null = null;
-  private radius: number | null = null;
+  private number: number = 0;
+  private depth: number = 0;
+  private mark: boolean = false;
+  private x: number = 0;
+  private y: number = 0;
+  private radius: number = 0;
 
-  getNconnection(): number | null {
+  getNconnection(): number {
     return this.nconnection;
   }
 
@@ -45,7 +45,7 @@ export class Loop {
     this._connections.push(c);
   }
 
-  getNumber(): number | null {
+  getNumber(): number {
     return this.number;
   }
 
@@ -53,7 +53,7 @@ export class Loop {
     this.number = number;
   }
 
-  getDepth(): number | null {
+  getDepth(): number {
     return this.depth;
   }
 
@@ -61,7 +61,7 @@ export class Loop {
     this.depth = depth;
   }
 
-  isMark(): boolean | null {
+  isMark(): boolean {
     return this.mark;
   }
 
@@ -69,7 +69,7 @@ export class Loop {
     this.mark = mark;
   }
 
-  getX(): number | null {
+  getX(): number {
     return this.x;
   }
 
@@ -77,7 +77,7 @@ export class Loop {
     this.x = x;
   }
 
-  getY(): number | null {
+  getY(): number {
     return this.y;
   }
 
@@ -85,7 +85,7 @@ export class Loop {
     this.y = y;
   }
 
-  getRadius(): number | null {
+  getRadius(): number {
     return this.radius;
   }
 

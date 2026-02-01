@@ -1,3 +1,5 @@
+import d3 from './d3-shim.js';
+
 import { RNAGraph } from './rnagraph.js';
 
 import { simpleXyCoordinates } from './simplernaplot.js';
@@ -5,30 +7,45 @@ import { NAView } from './naview/naview.js';
 
 import fstyle from './fornac.module.css';
 
-export function rnaPlot(passedOptions = {}) {
-  var options = {
+type RnaLayout = 'simple' | 'naview';
+
+interface RnaPlotOptions {
+  width: number;
+  height: number;
+  nucleotideRadius: number;
+  rnaEdgePadding: number; // how far the leftmost, rightmost, topmost and bottomost
+  // nucleotides are from the edge of the plot
+  labelInterval: number;
+  showNucleotideLabels: boolean;
+  startNucleotideNumber: number;
+  bundleExternalLinks: boolean;
+  rnaLayout: RnaLayout; // simple or naview
+  namePosition: string; // for x and y either 0, 0.5 or 1
+}
+
+export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
+  let options: RnaPlotOptions = {
     width: 300,
     height: 300,
     nucleotideRadius: 5,
-    rnaEdgePadding: 1, // how far the leftmost, rightmost, topmost and bottomost
-    // nucleotides are from the edge of the plot
+    rnaEdgePadding: 1,
     labelInterval: 10,
     showNucleotideLabels: true,
     startNucleotideNumber: 1,
     bundleExternalLinks: false,
-
-    rnaLayout: 'simple', // simple or naview
+    rnaLayout: 'simple',
     namePosition: '0 0', // for x and y either 0, 0.5 or 1
   };
-  var options = Object.assign(options, passedOptions);
+  options = Object.assign(options, passedOptions);
 
-  var xScale, yScale;
+  let xScale: any;
+  let yScale: any;
 
-  function createTransformToFillViewport(xValues, yValues) {
+  function createTransformToFillViewport(xValues: number[], yValues: number[]) {
     // create transform that will scale the x and y values so that
     // they fill the available viewport
-    let xExtent = d3.extent(xValues);
-    let yExtent = d3.extent(yValues);
+    const xExtent = d3.extent(xValues) as [number, number];
+    const yExtent = d3.extent(yValues) as [number, number];
 
     // add the radius of the nucleotides
     xExtent[0] -= options.nucleotideRadius + options.rnaEdgePadding;
@@ -38,21 +55,21 @@ export function rnaPlot(passedOptions = {}) {
     yExtent[1] += options.nucleotideRadius + options.rnaEdgePadding;
 
     // find out how wide and height the molecule
-    var xRange = xExtent[1] - xExtent[0];
-    var yRange = yExtent[1] - yExtent[0];
+    const xRange = xExtent[1] - xExtent[0];
+    const yRange = yExtent[1] - yExtent[0];
 
     // how much wider / taller is it than the available viewport
-    var xExtra = xRange - options.width;
-    var yExtra = yRange - options.height;
+    const xExtra = xRange - options.width;
+    const yExtra = yRange - options.height;
 
     // once we have a scale for one dimension, we can create the scale for the other
     // keeping the same expansion / shrinking ratio
-    function createOtherScale(firstScale, newDomain, newRange) {
-      var scaleFactor =
+    function createOtherScale(firstScale: any, newDomain: number[], newRange: number[]) {
+      const scaleFactor =
         (firstScale.range()[1] - firstScale.range()[0]) /
         (firstScale.domain()[1] - firstScale.domain()[0]);
-      var newWidth = (newDomain[1] - newDomain[0]) * scaleFactor;
-      var newMargin = (newRange[1] - newRange[0] - newWidth) / 2;
+      const newWidth = (newDomain[1] - newDomain[0]) * scaleFactor;
+      const newMargin = (newRange[1] - newRange[0] - newWidth) / 2;
 
       return {
         scaleFactor: scaleFactor,
@@ -63,7 +80,7 @@ export function rnaPlot(passedOptions = {}) {
       };
     }
 
-    var ret;
+    let ret: { scaleFactor: number; scale: any };
 
     if (xExtra > yExtra) {
       // we have to shrink more in the x-dimension than the y
@@ -79,38 +96,27 @@ export function rnaPlot(passedOptions = {}) {
       xScale = ret.scale;
     }
 
-    var xOffset = xScale.range()[0] - xScale.domain()[0];
-    var yOffset = yScale.range()[0] - yScale.domain()[0];
-
-    return (
-      'translate(' +
-      -(xScale.domain()[0] * ret.scaleFactor - xScale.range()[0]) +
-      ',' +
-      -(yScale.domain()[0] * ret.scaleFactor - yScale.range()[0]) +
-      ')' +
-      'scale(' +
-      ret.scaleFactor +
-      ')'
-    );
+    const translateX = -(xScale.domain()[0] * ret.scaleFactor - xScale.range()[0]);
+    const translateY = -(yScale.domain()[0] * ret.scaleFactor - yScale.range()[0]);
+    return `translate(${translateX},${translateY})scale(${ret.scaleFactor})`;
   }
 
-  function createNucleotides(selection, nucleotideNodes) {
+  function createNucleotides(selection: any, nucleotideNodes: any[]) {
     // create groupings for each nucleotide and label
-    var gs = selection
+    const gs = selection
       .selectAll('.gnode')
       .data(nucleotideNodes)
       .enter()
       .append('svg:g')
       .classed('gnode', true)
-      .attr('transform', function (d) {
-        return 'translate(' + d.x + ',' + d.y + ')';
+      .attr('transform', function (d: any) {
+        return `translate(${d.x},${d.y})`;
       });
 
-    var circles = gs
-      .append('svg:circle')
+    gs.append('svg:circle')
       .classed(fstyle.node, true)
       .attr('node_type', 'nucleotide')
-      .attr('base_type', (d) => {
+      .attr('base_type', (d: any) => {
         if (d.name) {
           return d.name.toLowerCase();
         }
@@ -118,60 +124,57 @@ export function rnaPlot(passedOptions = {}) {
       .attr('r', options.nucleotideRadius);
 
     if (options.showNucleotideLabels) {
-      var nucleotideLabels = gs
-        .append('svg:text')
-        .text(function (d) {
+      gs.append('svg:text')
+        .text(function (d: any) {
           return d.name;
         })
         .classed(fstyle.nodeLabel, true)
         .append('svg:title')
-        .text(function (d) {
+        .text(function (d: any) {
           return d.struct_name + ':' + d.num;
         });
     }
   }
 
-  function createLabels(selection, labelNodes) {
+  function createLabels(selection: any, labelNodes: any[]) {
     // create groupings for each nucleotide and label
 
-    var gs = selection
+    const gs = selection
       .selectAll()
       .data(labelNodes)
       .enter()
       .append('svg:g')
       .classed('gnode', true)
-      .attr('transform', function (d) {
-        return 'translate(' + d.x + ',' + d.y + ')';
+      .attr('transform', function (d: any) {
+        return `translate(${d.x},${d.y})`;
       });
 
-    var circles = gs
-      .append('svg:circle')
+    gs.append('svg:circle')
       .classed(fstyle.node, true)
       .attr('node_type', 'label')
       .attr('r', options.nucleotideRadius);
 
-    var numberLabels = gs
-      .append('svg:text')
+    gs.append('svg:text')
       .classed(fstyle.nodeLabel, true)
-      .text(function (d) {
+      .text(function (d: any) {
         return d.name;
       });
   }
 
-  function createName(selection, name) {
-    let nameLabel = selection
+  function createName(selection: any, name: string) {
+    const nameLabel = selection
       .append('svg:text')
       //.attr('dy', -10)
       .classed(fstyle.plotLabel, true)
       .text(name);
 
-    let xyPos = options.namePosition.split(' ', 2); // 0 0.5 1
-    let xy = [];
-    let textBBox = nameLabel.node().getBBox();
-    let textSize = [textBBox.width, textBBox.height];
-    let plotSize = [options.width, options.height];
+    const xyPos = options.namePosition.split(' ', 2); // 0 0.5 1
+    const xy: number[] = [];
+    const textBBox = nameLabel.node().getBBox();
+    const textSize = [textBBox.width, textBBox.height];
+    const plotSize = [options.width, options.height];
 
-    for (let p in [0, 1]) {
+    for (let p = 0; p < 2; p++) {
       switch (xyPos[p]) {
         case '0':
           xy[p] = textSize[p] / 2;
@@ -187,16 +190,16 @@ export function rnaPlot(passedOptions = {}) {
     nameLabel.attr('x', xy[0]).attr('y', xy[1]);
   }
 
-  function makeExternalLinksBundle(selection, links) {
-    var nodesDict = {};
-    var linksList = [];
-    links = links.filter(function (d) {
+  function makeExternalLinksBundle(selection: any, links: any[]) {
+    const nodesDict: Record<string, any> = {};
+    const linksList: any[] = [];
+    links = links.filter(function (d: any) {
       return d.linkType == 'correct' || d.linkType == 'incorrect' || d.linkType == 'extra';
     });
 
     selection.selectAll('[link-type=extra]').remove();
 
-    for (var i = 0; i < links.length; i++) {
+    for (let i = 0; i < links.length; i++) {
       if (links[i].source === null || links[i].target === null) continue;
 
       nodesDict[links[i].source.uid] = links[i].source;
@@ -210,26 +213,26 @@ export function rnaPlot(passedOptions = {}) {
       });
     }
 
-    var fbundling = d3
+    const fbundling = (d3 as any)
       .ForceEdgeBundling()
       .nodes(nodesDict)
       .edges(linksList)
       .compatibility_threshold(0.8)
       .step_size(0.2);
-    var results = fbundling();
+    const results = fbundling();
 
-    var d3line = d3.svg
+    const d3line = d3.svg
       .line()
-      .x(function (d) {
+      .x(function (d: any) {
         return d.x;
       })
-      .y(function (d) {
+      .y(function (d: any) {
         return d.y;
       })
       .interpolate('linear');
 
-    for (var i = 0; i < results.length; i++) {
-      var edge_subpoint_data = results[i];
+    for (let i = 0; i < results.length; i++) {
+      const edge_subpoint_data = results[i];
       // for each of the arrays in the results
       // draw a line between the subdivions points for that edge
 
@@ -237,54 +240,54 @@ export function rnaPlot(passedOptions = {}) {
         .append('path')
         .attr('d', d3line(edge_subpoint_data))
         .style('fill', 'none')
-        .attr('link-type', function (d) {
+        .attr('link-type', function () {
           return linksList[i].linkType;
         })
-        .attr('extra-link-type', function (d) {
+        .attr('extra-link-type', function () {
           return linksList[i].extraLinkType;
         })
         .style('stroke-opacity', 0.4); //use opacity as blending
     }
   }
 
-  function createLinks(selection, links) {
-    links = links.filter(function (d) {
+  function createLinks(selection: any, links: any[]) {
+    links = links.filter(function (d: any) {
       return d.source !== null && d.target !== null;
     });
-    var gs = selection
+    selection
       .selectAll('.link')
       .data(links)
       .enter()
       .append('svg:line')
-      .attr('x1', function (d) {
+      .attr('x1', function (d: any) {
         return d.source.x;
       })
-      .attr('x2', function (d) {
+      .attr('x2', function (d: any) {
         return d.target.x;
       })
-      .attr('y1', function (d) {
+      .attr('y1', function (d: any) {
         return d.source.y;
       })
-      .attr('y2', function (d) {
+      .attr('y2', function (d: any) {
         return d.target.y;
       })
-      .attr('link-type', function (d) {
+      .attr('link-type', function (d: any) {
         return d.linkType;
       })
-      .attr('extra-link-type', function (d) {
+      .attr('extra-link-type', function (d: any) {
         return d.extraLinkType;
       })
       .classed('link', true)
       .classed(fstyle.link, true);
   }
 
-  function chart(selection) {
-    selection.each(function (data) {
-      let plot = d3.select(this).append('g').classed(fstyle.plot, true);
+  function chart(selection: any) {
+    selection.each(function (this: Element, data: any) {
+      const plot = d3.select(this).append('g').classed(fstyle.plot, true);
 
       // data should be a dictionary containing at least a structure
       // and possibly a sequence
-      let rg = new RNAGraph(data.sequence, data.structure, data.name, options.startNucleotideNumber)
+      const rg = new RNAGraph(data.sequence, data.structure, data.name, options.startNucleotideNumber)
         .recalculateElements()
         .elementsToJson()
         .addName(data.name);
@@ -293,14 +296,16 @@ export function rnaPlot(passedOptions = {}) {
       // calculate the position of each nucleotide
       // the positions of the labels will be calculated in
       // the addLabels function
-      let positions = [];
+      let positions: number[][] = [];
 
       if (options.rnaLayout === 'naview') {
-        var naview = new NAView();
-        var naViewPositions = naview.naview_xy_coordinates(rg.pairtable);
+        const naview = new NAView();
+        const naViewPositions = naview.naview_xy_coordinates(rg.pairtable);
 
-        for (var i = 0; i < naViewPositions.nbase; i++) {
-          positions.push([naViewPositions.x[i], naViewPositions.y[i]]);
+        if (naViewPositions !== 0) {
+          for (let i = 0; i < naViewPositions.nbase; i++) {
+            positions.push([naViewPositions.x[i], naViewPositions.y[i]]);
+          }
         }
       } else {
         positions = simpleXyCoordinates(rg.pairtable);
@@ -314,25 +319,25 @@ export function rnaPlot(passedOptions = {}) {
 
       // create a transform that will fit the molecule to the
       // size of the viewport (canvas, svg, whatever)
-      let fillViewportTransform = createTransformToFillViewport(
-        rg.nodes.map(function (d) {
+      const fillViewportTransform = createTransformToFillViewport(
+        rg.nodes.map(function (d: any) {
           return d.x;
         }),
-        rg.nodes.map(function (d) {
+        rg.nodes.map(function (d: any) {
           return d.y;
         }),
       );
       plot.attr('transform', fillViewportTransform);
 
-      let nucleotideNodes = rg.nodes.filter(function (d) {
+      const nucleotideNodes = rg.nodes.filter(function (d: any) {
         return d.nodeType == 'nucleotide';
       });
 
-      let labelNodes = rg.nodes.filter(function (d) {
+      const labelNodes = rg.nodes.filter(function (d: any) {
         return d.nodeType == 'label';
       });
 
-      let links = rg.links;
+      const links = rg.links;
 
       createLinks(plot, links);
       createNucleotides(plot, nucleotideNodes);
@@ -345,67 +350,67 @@ export function rnaPlot(passedOptions = {}) {
     });
   }
 
-  chart.width = function (_) {
+  chart.width = function (_: number) {
     if (!arguments.length) return options.width;
     options.width = _;
     return chart;
   };
 
-  chart.height = function (_) {
+  chart.height = function (_: number) {
     if (!arguments.length) return options.height;
     options.height = _;
     return chart;
   };
 
-  chart.showNucleotideLabels = function (_) {
+  chart.showNucleotideLabels = function (_: boolean) {
     if (!arguments.length) return options.showNucleotideLabels;
     options.showNucleotideLabels = _;
     return chart;
   };
 
-  chart.rnaEdgePadding = function (_) {
+  chart.rnaEdgePadding = function (_: number) {
     if (!arguments.length) return options.rnaEdgePadding;
     options.rnaEdgePadding = _;
     return chart;
   };
 
-  chart.nucleotideRadius = function (_) {
+  chart.nucleotideRadius = function (_: number) {
     if (!arguments.length) return options.nucleotideRadius;
     options.nucleotideRadius = _;
     return chart;
   };
 
-  chart.labelInterval = function (_) {
+  chart.labelInterval = function (_: number) {
     if (!arguments.length) return options.labelInterval;
     options.labelInterval = _;
     return chart;
   };
 
-  chart.showNucleotideLabels = function (_) {
+  chart.showNucleotideLabels = function (_: boolean) {
     if (!arguments.length) return options.showNucleotideLabels;
     options.showNucleotideLabels = _;
     return chart;
   };
 
-  chart.startNucleotideNumber = function (_) {
+  chart.startNucleotideNumber = function (_: number) {
     if (!arguments.length) return options.startNucleotideNumber;
     options.startNucleotideNumber = _;
     return chart;
   };
 
-  chart.bundleExternalLinks = function (_) {
+  chart.bundleExternalLinks = function (_: boolean) {
     if (!arguments.length) return options.bundleExternalLinks;
     options.bundleExternalLinks = _;
     return chart;
   };
 
-  chart.rnaLayout = function (_) {
+  chart.rnaLayout = function (_: RnaLayout) {
     if (!arguments.length) return options.rnaLayout;
     options.rnaLayout = _;
     return chart;
   };
 
-  chart.namePosition = function (_) {
+  chart.namePosition = function (_: string) {
     if (!arguments.length) return options.namePosition;
     options.namePosition = _;
     return chart;

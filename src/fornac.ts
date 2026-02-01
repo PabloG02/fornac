@@ -4,16 +4,20 @@
 
 import fstyle from './fornac.module.css';
 
-// d3 is expected to be loaded globally via script tag (v3.5 doesn't support ES modules)
+import d3 from './d3-shim.js';
 import { contextMenu } from './d3-context-menu.js';
 
-import { RNAGraph } from './rnagraph.js';
+import { RNAGraph, ProteinGraph } from './rnagraph.js';
 import { ColorScheme, rnaUtilities } from './rnautils.js';
 
 import { simpleXyCoordinates } from './simplernaplot.js';
 import { NAView } from './naview/naview.js';
 
-export function FornaContainer(element, passedOptions = {}) {
+export function FornaContainer(
+  this: any,
+  element: string | Element,
+  passedOptions: Record<string, any> = {},
+) {
   var self = this;
 
   let options = {
@@ -64,13 +68,13 @@ export function FornaContainer(element, passedOptions = {}) {
 
   self.colorScheme = 'structure';
   self.customColors = {};
-  self.rnas = {};
-  self.extraLinks = []; //store links between different RNAs
+  self.rnas = {} as Record<string, any>;
+  self.extraLinks = [] as any[]; //store links between different RNAs
 
   // global mouse event vars
-  var mousedownLink = null,
-    mousedownNode = null,
-    mouseupNode = null;
+  let mousedownLink: any = null;
+  let mousedownNode: any = null;
+  let mouseupNode: any = null;
   let linkContextMenuShown = false;
 
   let resetMouseVars = () => {
@@ -80,8 +84,8 @@ export function FornaContainer(element, passedOptions = {}) {
   };
 
   var graph = (self.graph = {
-    nodes: [],
-    links: [],
+    nodes: [] as any[],
+    links: [] as any[],
   });
 
   Array.prototype.equals = function (array) {
@@ -110,7 +114,8 @@ export function FornaContainer(element, passedOptions = {}) {
     var ctrlKeydown = false;
 
     let keydown = () => {
-      switch (d3.event.keyCode) {
+      const event = d3.event as any;
+      switch (event.keyCode) {
         case 68: //'d' key
           console.log('dotbracket:', self.getStructuresDotBracket());
           break;
@@ -149,13 +154,22 @@ export function FornaContainer(element, passedOptions = {}) {
       .on('keydown', keydown)
       .on('keyup', keyup)
       .on('contextmenu', function () {
-        d3.event.preventDefault();
+        const event = d3.event as any;
+        event.preventDefault();
       });
   }
 
   /* Register global context menu */
   if (self.options.editable) {
-    let backgroundMenu = [
+    type MenuAction = (elm: any, d: any, i: any, mousePos?: any) => void;
+    type MenuItem = {
+      title: string;
+      action: MenuAction;
+      children?: MenuItem[];
+      disabled?: boolean;
+    };
+
+    let backgroundMenu: MenuItem[] = [
       {
         title: 'Add Node',
         action: function (elm, d, i, mousePos) {},
@@ -205,7 +219,7 @@ export function FornaContainer(element, passedOptions = {}) {
       },
     ];
 
-    let nodeMenu = [
+    let nodeMenu: MenuItem[] = [
       {
         title: 'Delete Node',
         action: function (elm, d, i) {
@@ -318,12 +332,12 @@ export function FornaContainer(element, passedOptions = {}) {
   }
 
   /* Draw the plot here */
-  d3.select(element).select('svg').remove();
+  d3.select(element as any).select('svg').remove();
 
   var svg = d3
-    .select(element)
+    .select(element as any)
     .attr('tabindex', 1)
-    .each(function () {
+    .each(function (this: HTMLElement) {
       this.focus();
     })
     .append('svg:svg')
@@ -468,18 +482,19 @@ export function FornaContainer(element, passedOptions = {}) {
     .on('brushstart', function (d) {})
     .on('brush', function () {
       // during brushing invert styling of selection as preview
-      let extent = d3.event.target.extent();
+      const event = d3.event as any;
+      let extent = event.target.extent();
 
       visNodes.selectAll('g.gnode').classed(fstyle.selectedNode, function (d) {
-        return (
-          d.selected ^
-          (extent[0][0] <= d.x && d.x < extent[1][0] && extent[0][1] <= d.y && d.y < extent[1][1])
-        );
+        const inExtent =
+          extent[0][0] <= d.x && d.x < extent[1][0] && extent[0][1] <= d.y && d.y < extent[1][1];
+        return d.selected !== inExtent;
       });
     })
     .on('brushend', function () {
       // after brushing finally toggle the selection
-      let extent = d3.event.target.extent();
+      const event = d3.event as any;
+      let extent = event.target.extent();
 
       visNodes
         .selectAll('g.gnode')
@@ -490,8 +505,8 @@ export function FornaContainer(element, passedOptions = {}) {
         })
         .each(toggleSelectNode);
 
-      d3.event.target.clear();
-      d3.select(this).call(d3.event.target);
+      event.target.clear();
+      d3.select(this).call(event.target);
     });
 
   let enableBrushing = () => {
@@ -570,7 +585,7 @@ export function FornaContainer(element, passedOptions = {}) {
   /* Main plot drawing functions */
   let createInitialLayout = function (structure, passedOptions = {}) {
     // the default options
-    let options = {
+    let options: any = {
       sequence: '',
       name: 'empty',
       positions: [],
@@ -594,10 +609,12 @@ export function FornaContainer(element, passedOptions = {}) {
       if (self.options.layout == 'naview') {
         let naview = new NAView();
 
-        let naViewPositions = naview.naview_xy_coordinates(rg.pairtable);
+        let naViewPositions: any = naview.naview_xy_coordinates(rg.pairtable);
         options.positions = [];
-        for (let i = 0; i < naViewPositions.nbase; i++)
-          options.positions.push([naViewPositions.x[i], naViewPositions.y[i]]);
+        if (naViewPositions !== 0) {
+          for (let i = 0; i < naViewPositions.nbase; i++)
+            options.positions.push([naViewPositions.x[i], naViewPositions.y[i]]);
+        }
       } else {
         options.positions = simpleXyCoordinates(rnaJson.pairtable);
       }
@@ -1561,7 +1578,7 @@ export function FornaContainer(element, passedOptions = {}) {
     }
 
     let rna = d.target.rna;
-    let toRemove = [];
+    let toRemove: any[] = [];
 
     for (let i = 0; i < rna.links.length; i++) {
       let link = rna.links[i];
@@ -1703,9 +1720,9 @@ export function FornaContainer(element, passedOptions = {}) {
     let newSeq = seq1 + seq2;
     let newPositions = positions1.concat(positions2);
 
-    let toAddInternal = [];
-    let toAddExternal = [];
-    let toDelete = {};
+    let toAddInternal: any[] = [];
+    let toAddExternal: any[] = [];
+    let toDelete: Record<string, boolean> = {};
 
     for (let i = 0; i < self.extraLinks.length; i++) {
       console.log('self.extraLinks[i]', self.extraLinks[i]);
@@ -1779,7 +1796,7 @@ export function FornaContainer(element, passedOptions = {}) {
     delete self.rnas[rna1.uid];
     delete self.rnas[rna2.uid];
 
-    let newRna = null;
+    let newRna: any = null;
     // create a new RNA
     if (self.options.animation)
       newRna = self.addRNA(newDotbracket, {
@@ -1793,7 +1810,7 @@ export function FornaContainer(element, passedOptions = {}) {
     for (let i = 0; i < toAddExternal.length; i++) {
       self.extraLinks.push({
         source: toAddExternal[i].source,
-        target: newRna.nodes[toAddExternal[i].target - 1],
+        target: newRna!.nodes[toAddExternal[i].target - 1],
         value: 1,
         uid: crypto.randomUUID(),
         linkType: 'intermolecule',
@@ -1807,6 +1824,8 @@ export function FornaContainer(element, passedOptions = {}) {
 
   function nudge(dx, dy) {
     // TODO currently unused
+    const node = visNodes.selectAll('g.gnode');
+    const link = visLinks.selectAll('line.link');
     node
       .filter(function (d) {
         return d.selected;
@@ -2028,6 +2047,7 @@ export function FornaContainer(element, passedOptions = {}) {
 
   self.fromJSON = function (jsonString) {
     var rnas, extraLinks;
+    let r;
 
     try {
       var data = JSON.parse(jsonString);
@@ -2071,7 +2091,7 @@ export function FornaContainer(element, passedOptions = {}) {
     self.update();
   };
 
-  self.addRNA = function (structure, passedOptions = {}) {
+  self.addRNA = function (structure, passedOptions: any = {}) {
     let rnaJson = createInitialLayout(structure, passedOptions);
     let centerView = false;
 
@@ -2124,18 +2144,18 @@ export function FornaContainer(element, passedOptions = {}) {
       let totalY = 0;
       let nodeCount = 0;
 
-      rnaGraph.nodes.forEach(function (node) {
-        totalX += node.x;
-        totalY += node.y;
+      rnaGraph.nodes.forEach(function (node: any) {
+        totalX += node.x as number;
+        totalY += node.y as number;
         nodeCount += 1;
       });
 
       if (nodeCount > 0) {
         // center the nodes at centerPos
 
-        rnaGraph.nodes.forEach(function (node) {
-          node.x = node.x + centerPos[0] - totalX / nodeCount;
-          node.y = node.y + centerPos[1] - totalY / nodeCount;
+        rnaGraph.nodes.forEach(function (node: any) {
+          node.x = (node.x as number) + centerPos[0] - totalX / nodeCount;
+          node.y = (node.y as number) + centerPos[1] - totalY / nodeCount;
 
           node.px = node.x;
           node.py = node.y;
@@ -2180,6 +2200,8 @@ export function FornaContainer(element, passedOptions = {}) {
 
   self.addNodes = function addNodes(json) {
     // add a new set of nodes from a json file
+    let maxX;
+    let maxY;
 
     // Resolve the sources and targets of the links so that they
     // are not just indeces into an array
@@ -2219,7 +2241,7 @@ export function FornaContainer(element, passedOptions = {}) {
       //entry.py += maxY;
     });
 
-    r = new RNAGraph('', '');
+    const r = new RNAGraph('', '');
     r.nodes = json.nodes;
     r.links = json.links;
 
@@ -2265,7 +2287,7 @@ export function FornaContainer(element, passedOptions = {}) {
   };
 
   self.addExternalLinks = function (rnaJson, externalLinks) {
-    let newLinks = [];
+    let newLinks: any[] = [];
 
     for (let i = 0; i < externalLinks.length; i++) {
       let newLink = {
@@ -2323,11 +2345,11 @@ export function FornaContainer(element, passedOptions = {}) {
 
   self.getStructuresDotBracket = function () {
     console.log('self.rnas:', self.rnas);
-    let sequence = [];
+    let sequence: string[] = [];
     let currIdx = 1;
-    let nodeIdxs = {};
-    let breaks = [];
-    let pairtable = [];
+    let nodeIdxs: Record<string, number> = {};
+    let breaks: number[] = [];
+    let pairtable: number[] = [];
 
     // add the nodes
     for (let uid in self.rnas) {

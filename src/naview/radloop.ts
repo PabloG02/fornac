@@ -1,10 +1,10 @@
 export class Radloop {
-  private radius: number | null = null;
-  private loopnumber: number | null = null;
+  private radius: number = 0;
+  private loopnumber: number = 0;
   private next: Radloop | null = null;
   private prev: Radloop | null = null;
 
-  getRadius(): number | null {
+  getRadius(): number {
     return this.radius;
   }
 
@@ -12,7 +12,7 @@ export class Radloop {
     this.radius = radius;
   }
 
-  getLoopnumber(): number | null {
+  getLoopnumber(): number {
     return this.loopnumber;
   }
 
