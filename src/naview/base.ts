@@ -1,13 +1,13 @@
 import { Region } from './region.js';
 
 export class Base {
-  private mate: number | null = null;
-  private x: number | null = null;
-  private y: number | null = null;
-  private extracted: boolean | null = null;
+  private mate: number = 0;
+  private x: number = 0;
+  private y: number = 0;
+  private extracted: boolean = false;
   private region: Region = new Region();
 
-  getMate(): number | null {
+  getMate(): number {
     return this.mate;
   }
 
@@ -15,7 +15,7 @@ export class Base {
     this.mate = mate;
   }
 
-  getX(): number | null {
+  getX(): number {
     return this.x;
   }
 
@@ -23,7 +23,7 @@ export class Base {
     this.x = x;
   }
 
-  getY(): number | null {
+  getY(): number {
     return this.y;
   }
 
@@ -31,7 +31,7 @@ export class Base {
     this.y = y;
   }
 
-  isExtracted(): boolean | null {
+  isExtracted(): boolean {
     return this.extracted;
   }
 

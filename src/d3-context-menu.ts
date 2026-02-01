@@ -1,19 +1,46 @@
 import './d3-context-menu.css';
 import ArrowIcon from './img/play.svg';
 
-// d3 is expected to be loaded globally via script tag (v3.5 doesn't support ES modules)
+import d3 from './d3-shim.js';
 
-export function contextMenu(menu, opts) {
+type ContextMenuTitle = string | ((data: any) => string);
+type ContextMenuAction = (elm: Element, d: any, i: number, mousePos: [number, number] | null) => void;
+
+interface ContextMenuItem {
+  title?: ContextMenuTitle;
+  action?: ContextMenuAction;
+  children?: ContextMenuItem[];
+  disabled?: boolean;
+  divider?: boolean;
+  childUid?: string;
+}
+
+type ContextMenuSource = ContextMenuItem[] | ((data: any) => ContextMenuItem[]);
+
+interface ContextMenuOptions {
+  onOpen?: (data: any, index: number) => boolean | void;
+  onClose?: () => void;
+  rootElement?: Element | null;
+  pos?: [number, number];
+  orientation?: 'left' | 'right';
+  parentStart?: [number, number] | null;
+}
+
+export function contextMenu(
+  menu: ContextMenuSource,
+  opts?: ContextMenuOptions | ((data: any, index: number) => boolean | void),
+) {
   let previouslyMouseUp = false;
   let clickAway = () => {};
-  let uid = crypto.randomUUID();
-  let rootElement = null;
-  let orientation = 'right'; // display the menu to the right of the mouse click
+  const uid = crypto.randomUUID();
+  let rootElement: Element | null = null;
+  let orientation: 'left' | 'right' = 'right'; // display the menu to the right of the mouse click
   // or parent elemement
-  let initialPos = null;
-  let parentStart = null;
+  let initialPos: [number, number] | null = null;
+  let parentStart: [number, number] | null = null;
 
-  var openCallback, closeCallback;
+  let openCallback: ContextMenuOptions['onOpen'];
+  let closeCallback: ContextMenuOptions['onClose'];
 
   if (typeof opts === 'function') {
     openCallback = opts;
@@ -23,38 +50,40 @@ export function contextMenu(menu, opts) {
     closeCallback = opts.onClose;
   }
 
-  if ('rootElement' in opts) rootElement = opts['rootElement'];
+  if (opts && 'rootElement' in opts) rootElement = opts.rootElement ?? null;
 
-  if ('pos' in opts) {
+  if (opts && 'pos' in opts) {
     // do we want to place this menu somewhere specific?
-    initialPos = opts.pos;
+    initialPos = opts.pos ?? null;
   }
 
-  if ('orientation' in opts) {
+  if (opts && 'orientation' in opts && opts.orientation) {
     orientation = opts.orientation;
   }
 
-  if ('parentStart' in opts) {
-    parentStart = opts.parentStart;
+  if (opts && 'parentStart' in opts) {
+    parentStart = opts.parentStart ?? null;
   }
 
+  const menuClass = `d3-context-menu-${uid}`;
+
   // create the div element that will hold the context menu
-  d3.selectAll('.d3-context-menu-' + uid)
+  d3.selectAll(`.${menuClass}`)
     .data([1])
     .enter()
     .append('div')
     .classed('d3-context-menu', true)
-    .classed('d3-context-menu-' + uid, true);
+    .classed(menuClass, true);
 
   // close menu
-  d3.select('body').on('click.d3-context-menu-' + uid, function () {
+  d3.select('body').on(`click.d3-context-menu-${uid}`, function () {
     if (previouslyMouseUp) {
       previouslyMouseUp = false;
       return;
     }
     console.log('body click close');
 
-    d3.select('.d3-context-menu-' + uid).style('display', 'none');
+    d3.select(`.${menuClass}`).style('display', 'none');
     orientation = 'right';
 
     if (closeCallback) {
@@ -63,42 +92,50 @@ export function contextMenu(menu, opts) {
   });
 
   // this gets executed when a contextmenu event occurs
-  return function (data, index, pMouseUp = false, clickAwayFunc = function () {}) {
-    var elm = this;
-    var contextMenuPos = null;
-    let mousePos = null;
-    let currentThis = this;
+  return function (
+    this: Element,
+    data: any,
+    index: number,
+    pMouseUp = false,
+    clickAwayFunc: () => void = () => {},
+  ) {
+    const elm = this;
+    let mousePos: [number, number] | null = null;
+    const currentThis = this;
 
-    if (rootElement == null) mousePos = d3.mouse(this);
-    else mousePos = d3.mouse(rootElement); // for recursive menus, we need the mouse
+    if (rootElement == null) mousePos = d3.mouse(this) as [number, number];
+    else mousePos = d3.mouse(rootElement) as [number, number]; // for recursive menus, we need the mouse
     // position relative to another element
 
     clickAway = clickAwayFunc;
-    let openChildMenuUid = null;
+    let openChildMenuUid: string | null = null;
 
     previouslyMouseUp = pMouseUp;
 
-    d3.selectAll('.d3-context-menu-' + uid).html('');
-    var list = d3
-      .selectAll('.d3-context-menu-' + uid)
-      .on('contextmenu', function (d) {
+    d3.selectAll(`.${menuClass}`).html('');
+    const list = d3
+      .selectAll(`.${menuClass}`)
+      .on('contextmenu', function () {
         console.log('context-menu close');
-        d3.select('.d3-context-menu-' + uid).style('display', 'none');
+        d3.select(`.${menuClass}`).style('display', 'none');
         orientation = 'right';
 
-        d3.event.preventDefault();
-        d3.event.stopPropagation();
+        const event = d3.event as any;
+        event.preventDefault();
+        event.stopPropagation();
       })
       .append('ul');
 
+    const items = typeof menu === 'function' ? menu(data) : menu;
+
     list
       .selectAll('li')
-      .data(typeof menu === 'function' ? menu(data) : menu)
+      .data(items)
       .enter()
       .append('li')
-      .attr('class', function (d) {
+      .attr('class', function (d: ContextMenuItem) {
         console.log('d:', d);
-        var ret = '';
+        let ret = '';
         if (d.divider) {
           ret += ' is-divider';
         }
@@ -113,16 +150,16 @@ export function contextMenu(menu, opts) {
         }
         return ret;
       })
-      .html(function (d) {
+      .html(function (d: ContextMenuItem) {
         if (d.divider) {
           return '<hr>';
         }
         if (!d.title) {
           console.error('No title attribute set. Check the spelling of your options.');
         }
-        return typeof d.title === 'string' ? d.title : d.title(data);
+        return typeof d.title === 'string' ? d.title : d.title ? d.title(data) : '';
       })
-      .on('click', function (d, i) {
+      .on('click', function (d: ContextMenuItem) {
         if (d.disabled) return; // do nothing if disabled
         if (!d.action) return; // headers have no "action"
         d.action(elm, data, index, mousePos);
@@ -136,21 +173,21 @@ export function contextMenu(menu, opts) {
           closeCallback();
         }
       })
-      .on('mouseenter', function (d, i) {
+      .on('mouseenter', function (this: HTMLElement, d: ContextMenuItem, i: number) {
         d3.select(this).classed('d3-context-menu-selected', true);
 
         if (openChildMenuUid != null) {
           // there's a child menu open
 
           // unselect all items
-          d3.select('.d3-context-menu-' + uid)
+          d3.select(`.${menuClass}`)
             .selectAll('li')
             .classed('d3-context-menu-selected', false);
 
           if (typeof d.children == 'undefined') {
             console.log('no children close');
             // no children, so hide any open child menus
-            d3.select('.d3-context-menu-' + openChildMenuUid).style('display', 'none');
+            d3.select(`.${openChildMenuUid}`).style('display', 'none');
 
             openChildMenuUid = null;
             return;
@@ -164,7 +201,7 @@ export function contextMenu(menu, opts) {
             console.log('open different child menu close');
 
             // close the already open one
-            d3.select('.d3-context-menu-' + openChildMenuUid).style('display', 'none');
+            d3.select(`.${openChildMenuUid}`).style('display', 'none');
 
             openChildMenuUid = null;
           }
@@ -172,9 +209,9 @@ export function contextMenu(menu, opts) {
 
         // there should be no menu open right now
         if (typeof d.children != 'undefined') {
-          let boundingRect = this.getBoundingClientRect();
+          const boundingRect = (this as Element).getBoundingClientRect();
 
-          let childrenContextMenu = null;
+          let childrenContextMenu;
           if (orientation == 'left') {
             childrenContextMenu = contextMenu(d.children, {
               rootElement: currentThis,
@@ -199,12 +236,12 @@ export function contextMenu(menu, opts) {
           }
 
           d.childUid = childrenContextMenu.apply(this, [data, i, true, function () {}]);
-          openChildMenuUid = d.childUid;
+          openChildMenuUid = d.childUid ?? null;
         }
 
         d3.select(this).classed('d3-context-menu-selected', true);
       })
-      .on('mouseleave', function (d, i) {
+      .on('mouseleave', function (this: HTMLElement) {
         if (openChildMenuUid == null) {
           d3.select(this).classed('d3-context-menu-selected', false);
         }
@@ -227,20 +264,21 @@ export function contextMenu(menu, opts) {
       }
     }
 
-    let contextMenuSelection = d3.select('.d3-context-menu-' + uid).style('display', 'block');
+    const contextMenuSelection = d3.select(`.${menuClass}`).style('display', 'block');
 
     if (initialPos == null) {
-      d3.select('.d3-context-menu-' + uid)
-        .style('left', d3.event.pageX - 2 + 'px')
-        .style('top', d3.event.pageY - 2 + 'px');
+      const event = d3.event as any;
+      d3.select(`.${menuClass}`)
+        .style('left', event.pageX - 2 + 'px')
+        .style('top', event.pageY - 2 + 'px');
     } else {
-      d3.select('.d3-context-menu-' + uid)
-        .style('left', initialPos[0] + 'px')
-        .style('top', initialPos[1] + 'px');
+      d3.select(`.${menuClass}`)
+        .style('left', `${initialPos[0]}px`)
+        .style('top', `${initialPos[1]}px`);
     }
 
     // check if the menu disappears off the side of the window
-    let boundingRect = contextMenuSelection.node().getBoundingClientRect();
+    const boundingRect = (contextMenuSelection.node() as Element).getBoundingClientRect();
 
     if (boundingRect.left + boundingRect.width > window.innerWidth || orientation == 'left') {
       orientation = 'left';
@@ -248,18 +286,19 @@ export function contextMenu(menu, opts) {
       // menu goes of the end of the window, position it the other way
       if (initialPos == null) {
         // place the menu where the user clicked
-        d3.select('.d3-context-menu-' + uid)
-          .style('left', d3.event.pageX - 2 - boundingRect.width + 'px')
-          .style('top', d3.event.pageY - 2 + 'px');
+        const event = d3.event as any;
+        d3.select(`.${menuClass}`)
+          .style('left', event.pageX - 2 - boundingRect.width + 'px')
+          .style('top', event.pageY - 2 + 'px');
       } else {
         if (parentStart != null) {
-          d3.select('.d3-context-menu-' + uid)
+          d3.select(`.${menuClass}`)
             .style('left', parentStart[0] - boundingRect.width + 'px')
             .style('top', parentStart[1] + 'px');
         } else {
-          d3.select('.d3-context-menu-' + uid)
-            .style('left', initialPos[0] - boundingRect.width + 'px')
-            .style('top', initialPos[1] + 'px');
+          d3.select(`.${menuClass}`)
+            .style('left', `${initialPos[0] - boundingRect.width}px`)
+            .style('top', `${initialPos[1]}px`);
         }
       }
     }
@@ -268,8 +307,9 @@ export function contextMenu(menu, opts) {
 
     if (previouslyMouseUp) return uid;
 
-    d3.event.preventDefault();
-    d3.event.stopPropagation();
+    const event = d3.event as any;
+    event.preventDefault();
+    event.stopPropagation();
     //d3.event.stopImmediatePropagation();
     //
     return uid;

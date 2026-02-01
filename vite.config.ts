@@ -65,14 +65,14 @@ const libConfig: UserConfig = {
   ],
   resolve: {
     alias: {
-      '@pablog02/fornac': resolve(__dirname, 'src/index.js'),
+      '@pablog02/fornac': resolve(__dirname, 'src/index.ts'),
     },
   },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.js'),
+      entry: resolve(__dirname, 'src/index.ts'),
       fileName: 'fornac.esm',
       formats: ['es'],
     },
@@ -104,7 +104,7 @@ const examplesConfig: UserConfig = {
   publicDir: false,
   resolve: {
     alias: {
-      '@pablog02/fornac': resolve(__dirname, 'src/index.js'),
+      '@pablog02/fornac': resolve(__dirname, 'src/index.ts'),
     },
   },
   build: {

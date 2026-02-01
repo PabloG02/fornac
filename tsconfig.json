@@ -12,6 +12,8 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
 
     "allowJs": true,
     "checkJs": false,

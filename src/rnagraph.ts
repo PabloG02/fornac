@@ -1,0 +1,914 @@
+import { arraysEqual, RNAUtilities, rnaUtilities } from './rnautils.js';
+
+const numberSort = function (a: number, b: number) {
+  return a - b;
+};
+
+export class ProteinGraph {
+  [key: string]: any;
+
+  constructor(structName = '', size = 0, uid?: string) {
+    const self = this as any;
+
+    self.type = 'protein';
+    self.size = size;
+    self.nodes = [
+      {
+        name: 'P',
+        num: 1,
+        radius: 3 * Math.sqrt(size),
+        rna: self,
+        nodeType: 'protein',
+        structName: structName,
+        elemType: 'p',
+        size: size,
+        uid: crypto.randomUUID(),
+      },
+    ];
+
+    self.links = [];
+    self.uid = crypto.randomUUID();
+
+    self.addUids = function (uids: string[]) {
+      for (let i = 0; i < uids.length; i++) self.nodes[i].uid = uids[i];
+
+      return self;
+    };
+
+    self.getUids = function () {
+      /* Get the positions of each node so that they
+       * can be passed to elementsToJson later
+       */
+      const uids: string[] = [];
+      for (let i = 0; i < self.dotbracket.length; i++) uids.push(self.nodes[i].uid);
+
+      return uids;
+    };
+  }
+}
+
+export class RNAGraph {
+  [key: string]: any;
+
+  constructor(seq = '', dotbracket = '', structName = '', startNumber = 1) {
+    const self = this as any;
+
+    self.type = 'rna';
+    self.circularizeExternal = false;
+    self.seq = seq;
+    self.dotbracket = dotbracket; //i.e. ..((..))..
+    self.structName = structName;
+    self.circular = false;
+
+    if (self.dotbracket.slice(-1) == '*') {
+      //circular RNA
+      self.dotbracket = self.dotbracket.slice(0, -1);
+      self.circular = true;
+    }
+
+    self.uid = crypto.randomUUID();
+
+    self.elements = []; //store the elements and the
+    //nucleotides they contain
+    self.pseudoknotPairs = [];
+    self.nucsToNodes = {};
+
+    self.addUids = function (uids: string[]) {
+      const nucleotideNodes = self.nodes.filter(function (d: any) {
+        return d.nodeType == 'nucleotide';
+      });
+
+      for (let i = 0; i < uids.length && i < nucleotideNodes.length; i++) {
+        nucleotideNodes[i].uid = uids[i];
+      }
+
+      return self;
+    };
+
+    self.computePairtable = function () {
+      self.pairtable = rnaUtilities.dotbracketToPairtable(self.dotbracket);
+    };
+
+    self.removeBreaks = function (targetString: string) {
+      // Remove all chain breaks (denoted with a '&', which indicate
+      // that the input represents more than one strand)
+      const breaks: number[] = [];
+      let breakIndex = -1;
+
+      while ((breakIndex = targetString.indexOf('&')) >= 0) {
+        breaks.push(breakIndex);
+        targetString =
+          targetString.substring(0, breakIndex) +
+          targetString.substring(breakIndex + 1, targetString.length);
+      }
+
+      return { targetString: targetString, breaks: breaks };
+    };
+
+    let ret = self.removeBreaks(self.dotbracket);
+    self.dotbracket = ret.targetString;
+    self.dotBracketBreaks = ret.breaks;
+
+    ret = self.removeBreaks(self.seq);
+    self.seq = ret.targetString;
+    self.seqBreaks = ret.breaks;
+
+    self.rnaLength = self.dotbracket.length;
+
+    if (!arraysEqual(self.dotBracketBreaks, self.seqBreaks)) {
+      console.log('WARNING: Sequence and structure breaks not equal');
+      console.log('WARNING: Using the breaks in the structure');
+    }
+
+    self.computePairtable();
+
+    self.addPositions = function (nodeType: string, positions: number[][]) {
+      const labelNodes = self.nodes.filter(function (d: any) {
+        return d.nodeType == nodeType;
+      });
+
+      for (let i = 0; i < labelNodes.length; i++) {
+        labelNodes[i].x = positions[i][0];
+        labelNodes[i].y = positions[i][1];
+      }
+
+      return self;
+    };
+
+    self.breakNodesToFakeNodes = function () {
+      // convert all the nodes following breaks to fake nodes
+      const labelNodes = self.nodes.filter(function (d: any) {
+        return d.nodeType == 'nucleotide';
+      });
+
+      // if a node was an artifical break node, convert it to a middle
+      for (let i = 0; i < labelNodes.length; i++) {
+        if (self.dotBracketBreaks.indexOf(i) >= 0) {
+          labelNodes[i].nodeType = 'middle';
+          labelNodes[i + 1].nodeType = 'middle';
+        }
+      }
+
+      for (let i = 0; i < self.elements.length; i++) {
+        let broken = false;
+
+        // change the elemType of the other nodes in the element containing
+        // the break
+        for (let j = 0; j < self.elements[i][2].length; j++) {
+          if (self.dotBracketBreaks.indexOf(self.elements[i][2][j]) >= 0) broken = true;
+        }
+
+        if (broken) {
+          self.elements[i][2].map(function (x: number) {
+            if (x == 0) return;
+            self.nodes[x - 1].elemType = 'e';
+          });
+        } else {
+          self.elements[i][2].map(function (x: number) {
+            if (x == 0) return;
+            self.nodes[x - 1].elemType = self.elements[i][0];
+          });
+        }
+      }
+      return self;
+    };
+
+    self.getPositions = function (nodeType: string) {
+      const positions: number[][] = [];
+      const nucleotideNodes = self.nodes.filter(function (d: any) {
+        return d.nodeType == nodeType;
+      });
+
+      for (let i = 0; i < nucleotideNodes.length; i++)
+        positions.push([nucleotideNodes[i].x, nucleotideNodes[i].y]);
+
+      return positions;
+    };
+
+    self.getUids = function () {
+      /* Get the positions of each node so that they
+       * can be passed to elementsToJson later
+       */
+      const uids: string[] = [];
+      for (let i = 0; i < self.dotbracket.length; i++) uids.push(self.nodes[i].uid);
+
+      return uids;
+    };
+
+    self.reinforceStems = function () {
+      const pt = self.pairtable;
+      const relevantElements = self.elements.filter(function (d: any[]) {
+        return d[0] == 's' && d[2].length >= 4;
+      });
+
+      for (let i = 0; i < relevantElements.length; i++) {
+        const allNucs = relevantElements[i][2];
+        const nucs = allNucs.slice(0, allNucs.length / 2);
+
+        for (let j = 0; j < nucs.length - 1; j++) {
+          self.addFakeNode([nucs[j], nucs[j + 1], pt[nucs[j + 1]], pt[nucs[j]]]);
+        }
+      }
+
+      return self;
+    };
+
+    self.reinforceLoops = function () {
+      /*
+       * Add a set of fake nodes to enforce the structure
+       */
+      const filterNucs = function (d: number) {
+        return d !== 0 && d <= self.dotbracket.length;
+      };
+
+      for (let i = 0; i < self.elements.length; i++) {
+        if (self.elements[i][0] == 's' || (!self.circularizeExternal && self.elements[i][0] == 'e'))
+          continue;
+
+        const nucs = self.elements[i][2].filter(filterNucs);
+
+        if (self.elements[i][0] == 'e') {
+          const newNode1 = {
+            name: '',
+            num: -3,
+            //'radius': 18 * radius -6,
+            radius: 0,
+            rna: self,
+            nodeType: 'middle',
+            elemType: 'f',
+            nucs: [],
+            x: self.nodes[self.rnaLength - 1].x,
+            y: self.nodes[self.rnaLength - 1].y,
+            px: self.nodes[self.rnaLength - 1].px,
+            py: self.nodes[self.rnaLength - 1].py,
+            uid: crypto.randomUUID(),
+          };
+          const newNode2 = {
+            name: '',
+            num: -2,
+            //'radius': 18 * radius -6,
+            radius: 0,
+            rna: self,
+            nodeType: 'middle',
+            elemType: 'f',
+            nucs: [],
+            x: self.nodes[0].x,
+            y: self.nodes[0].y,
+            px: self.nodes[0].px,
+            py: self.nodes[0].py,
+            uid: crypto.randomUUID(),
+          };
+
+          nucs.push(self.nodes.length + 1);
+          nucs.push(self.nodes.length + 2);
+          self.nodes.push(newNode1);
+          self.nodes.push(newNode2);
+        }
+
+        self.addFakeNode(nucs);
+      }
+
+      return self;
+    };
+
+    self.updateLinkUids = function () {
+      for (let i = 0; i < self.links.length; i++) {
+        self.links[i].uid = self.links[i].source.uid + self.links[i].target.uid;
+      }
+
+      return self;
+    };
+
+    self.addFakeNode = function (nucs: number[]) {
+      const linkLength = 18; //make sure this is consistent with the value in force.js
+      const nodeWidth = 6;
+      let angle = (3.1415 * 2) / (2 * nucs.length);
+      let radius = linkLength / (2 * Math.tan(angle));
+
+      let fakeNodeUid = '';
+
+      for (let i = 0; i < nucs.length; i++) fakeNodeUid += self.nodes[nucs[i] - 1].uid;
+
+      const newNode: any = {
+        name: '',
+        num: -1,
+        //'radius': 18 * radius -6,
+        radius: radius,
+        rna: self,
+        nodeType: 'middle',
+        elemType: 'f',
+        nucs: nucs,
+        uid: fakeNodeUid,
+      };
+      self.nodes.push(newNode);
+
+      let newX = 0;
+      let newY = 0;
+      let coordsCounted = 0;
+
+      angle = ((nucs.length - 2) * 3.14159) / (2 * nucs.length);
+      radius = 0.5 / Math.cos(angle);
+
+      for (let j = 0; j < nucs.length; j++) {
+        if (nucs[j] === 0 || nucs[j] > self.dotbracket.length) continue;
+
+        //link to the center node
+        self.links.push({
+          source: self.nodes[nucs[j] - 1],
+          target: self.nodes[self.nodes.length - 1],
+          linkType: 'fake',
+          value: radius,
+          uid: crypto.randomUUID(),
+        });
+
+        if (nucs.length > 4) {
+          //link across the loop
+          self.links.push({
+            source: self.nodes[nucs[j] - 1],
+            target: self.nodes[nucs[(j + Math.floor(nucs.length / 2)) % nucs.length] - 1],
+            linkType: 'fake',
+            value: radius * 2,
+            uid: crypto.randomUUID(),
+          });
+        }
+
+        const ia = ((nucs.length - 2) * 3.14159) / nucs.length;
+        const c = 2 * Math.cos(3.14159 / 2 - ia / 2);
+        //link to over-neighbor
+        self.links.push({
+          source: self.nodes[nucs[j] - 1],
+          target: self.nodes[nucs[(j + 2) % nucs.length] - 1],
+          linkType: 'fake',
+          value: c,
+        });
+
+        // calculate the mean of the coordinats in this loop
+        // and place the fake node there
+        const fromNode = self.nodes[nucs[j] - 1];
+        if ('x' in fromNode) {
+          newX += fromNode.x;
+          newY += fromNode.y;
+
+          coordsCounted += 1;
+        }
+      }
+
+      if (coordsCounted > 0) {
+        // the nucleotides had set positions so we can calculate the position
+        // of the fake node
+        newNode.x = newX / coordsCounted;
+        newNode.y = newY / coordsCounted;
+        newNode.px = newNode.x;
+        newNode.py = newNode.y;
+      }
+
+      return self;
+    };
+
+    self.connectFakeNodes = function () {
+      const linkLength = 18;
+
+      // We want to be able to connect all of the fake nodes
+      // and create a structure consisting of just them
+      const filterOutNonFakeNodes = function (d: any) {
+        return d.nodeType == 'middle';
+      };
+
+      const nucsToNodes: Record<string, any[]> = {};
+      const fakeNodes = self.nodes.filter(filterOutNonFakeNodes);
+      const linked: Record<string, boolean> = {};
+
+      // initialize the nucleotides to nodes
+      for (let i = 1; i <= self.nodes.length; i++) nucsToNodes[i] = [];
+
+      for (let i = 0; i < fakeNodes.length; i++) {
+        const thisNode = fakeNodes[i];
+
+        // each fake node represents a certain set of nucleotides (thisNode.nucs)
+        for (let j = 0; j < thisNode.nucs.length; j++) {
+          const thisNuc = thisNode.nucs[j];
+
+          // check to see if this nucleotide has been seen in another fake node
+          // if it has, then we add a link between the two nodes
+          for (let k = 0; k < nucsToNodes[thisNuc].length; k++) {
+            if (JSON.stringify([nucsToNodes[thisNuc][k].uid, thisNode.uid].sort()) in linked)
+              continue; //already linked
+
+            const distance = nucsToNodes[thisNuc][k].radius + thisNode.radius;
+
+            self.links.push({
+              source: nucsToNodes[thisNuc][k],
+              target: thisNode,
+              value: distance / linkLength,
+              linkType: 'fake_fake',
+            });
+
+            // note that we've already seen this link
+            linked[JSON.stringify([nucsToNodes[thisNuc][k].uid, thisNode.uid].sort())] = true;
+          }
+
+          nucsToNodes[thisNuc].push(thisNode);
+        }
+      }
+
+      return self;
+    };
+
+    self.addExtraLinks = function (extraLinks: any[]) {
+      if (typeof extraLinks == 'undefined') return self;
+
+      for (let i = 0; i < extraLinks.length; i++) {
+        const source = self.getNodeFromNucleotides(extraLinks[i].from);
+        const target = self.getNodeFromNucleotides(extraLinks[i].to);
+
+        const newLink = {
+          source: source,
+          target: target,
+          linkType: 'extra',
+          extraLinkType: extraLinks[i].linkType,
+          uid: crypto.randomUUID(),
+        };
+
+        self.links.push(newLink);
+      }
+
+      return self;
+    };
+
+    self.elementsToJson = function () {
+      /* Convert a set of secondary structure elements to a json
+       * representation of the graph that can be used with d3's
+       * force-directed layout to generate a visualization of
+       * the structure.
+       */
+      const pt = self.pairtable;
+
+      self.nodes = [];
+      self.links = [];
+
+      //create a reverse lookup so we can find out the type
+      //of element that a node is part of
+      const elemTypes: Record<string, string> = {};
+
+      //sort so that we count stems last
+      self.elements.sort();
+
+      for (let i = 0; i < self.elements.length; i++) {
+        const nucs = self.elements[i][2];
+        for (let j = 0; j < nucs.length; j++) {
+          elemTypes[nucs[j]] = self.elements[i][0];
+        }
+      }
+
+      for (let i = 1; i <= pt[0]; i++) {
+        let nodeName = self.seq[i - 1];
+
+        if (self.dotBracketBreaks.indexOf(i - 1) >= 0 || self.dotBracketBreaks.indexOf(i - 2) >= 0) {
+          nodeName = '';
+        }
+
+        //create a node for each nucleotide
+        self.nodes.push({
+          name: nodeName,
+          num: startNumber + i - 1,
+          radius: 5,
+          rna: self,
+          nodeType: 'nucleotide',
+          structName: self.structName,
+          elemType: elemTypes[i],
+          uid: crypto.randomUUID(),
+          linked: false,
+        });
+      }
+
+      for (let i = 0; i < self.nodes.length; i++) {
+        if (i === 0) self.nodes[i].prevNode = null;
+        else {
+          self.nodes[i].prevNode = self.nodes[i - 1];
+        }
+
+        if (i == self.nodes.length - 1) self.nodes[i].nextNode = null;
+        else {
+          self.nodes[i].nextNode = self.nodes[i + 1];
+        }
+      }
+
+      for (let i = 1; i <= pt[0]; i++) {
+        if (pt[i] !== 0) {
+          // base-pair links
+          self.links.push({
+            source: self.nodes[i - 1],
+            target: self.nodes[pt[i] - 1],
+            linkType: 'basepair',
+            value: 1,
+            uid: crypto.randomUUID(),
+          });
+        }
+
+        if (i > 1) {
+          // backbone links
+          if (
+            self.dotBracketBreaks.indexOf(i - 1) === -1 &&
+            self.dotBracketBreaks.indexOf(i - 2) == -1 &&
+            self.dotBracketBreaks.indexOf(i - 3) == -1
+          ) {
+            // there is no break in the strands here
+            // we can add a backbone link
+            self.links.push({
+              source: self.nodes[i - 2],
+              target: self.nodes[i - 1],
+              linkType: 'backbone',
+              value: 1,
+              uid: crypto.randomUUID(),
+            });
+            self.nodes[i - 1].linked = true;
+          }
+        }
+      }
+
+      //add the pseudoknot links
+      for (let i = 0; i < self.pseudoknotPairs.length; i++) {
+        self.links.push({
+          source: self.nodes[self.pseudoknotPairs[i][0] - 1],
+          target: self.nodes[self.pseudoknotPairs[i][1] - 1],
+          linkType: 'pseudoknot',
+          value: 1,
+          uid: crypto.randomUUID(),
+        });
+      }
+
+      if (self.circular) {
+        self.links.push({
+          source: self.nodes[0],
+          target: self.nodes[self.rnaLength - 1],
+          linkType: 'backbone',
+          value: 1,
+          uid: crypto.randomUUID(),
+        });
+      }
+
+      return self;
+    };
+
+    self.ptToElements = function (pt: any[], level: number, i: number, j: number) {
+      /* Convert a pair table to a list of secondary structure
+       * elements:
+       *
+       * [['s',1,[2,3]]
+       *
+       * The 's' indicates that an element can be a stem. It can also be
+       * an interior loop ('i'), a hairpin loop ('h') or a multiloop ('m')
+       *
+       * The second number (1 in this case) indicates the depth or
+       * how many base pairs have to be broken to get to this element.
+       *
+       * Finally, there is the list of nucleotides which are part of
+       * of this element.
+       */
+      let elements: any[] = [];
+      let u5: number[] = [i - 1];
+      let u3: number[] = [j + 1];
+
+      if (i > j) return [];
+
+      //iterate over the unpaired regions on either side
+      //this is either 5' and 3' unpaired if level == 0
+      //or an interior loop or a multiloop
+      for (; pt[i] === 0; i++) {
+        u5.push(i);
+      }
+      for (; pt[j] === 0; j--) {
+        u3.push(j);
+      }
+
+      if (i > j) {
+        //hairpin loop or one large unpaired molecule
+        u5.push(i);
+        if (level === 0) return [['e', level, u5.sort(numberSort)]];
+        else {
+          // check to see if we have chain breaks due
+          // to multiple strands in the input
+          let external = false;
+          const left: number[] = [];
+          const right: number[] = [];
+          for (let k = 0; k < u5.length; k++) {
+            if (external) right.push(u5[k]);
+            else left.push(u5[k]);
+
+            if (self.dotBracketBreaks.indexOf(u5[k]) >= 0) external = true;
+          }
+
+          if (external) {
+            return [['h', level, u5.sort(numberSort)]];
+          } else
+            // if not, this is a simple hairpin loop
+            return [['h', level, u5.sort(numberSort)]];
+        }
+      }
+
+      if (pt[i] != j) {
+        //multiloop
+        let m = u5;
+        let k = i;
+
+        // the nucleotide before and the starting nucleotide
+        m.push(k);
+        while (k <= j) {
+          // recurse into a stem
+          elements = elements.concat(self.ptToElements(pt, level, k, pt[k]));
+
+          // add the nucleotides between stems
+          m.push(pt[k]);
+          k = pt[k] + 1;
+          for (; pt[k] === 0 && k <= j; k++) {
+            m.push(k);
+          }
+          m.push(k);
+        }
+        m.pop();
+        m = m.concat(u3);
+
+        if (m.length > 0) {
+          if (level === 0) elements.push(['e', level, m.sort(numberSort)]);
+          else elements.push(['m', level, m.sort(numberSort)]);
+        }
+
+        return elements;
+      }
+
+      if (pt[i] === j) {
+        //interior loop
+        u5.push(i);
+        u3.push(j);
+
+        const combined = u5.concat(u3);
+        if (combined.length > 4) {
+          if (level === 0) elements.push(['e', level, u5.concat(u3).sort(numberSort)]);
+          else elements.push(['i', level, u5.concat(u3).sort(numberSort)]);
+        }
+      }
+
+      let s: number[] = [];
+      //go through the stem
+      while (pt[i] === j && i < j) {
+        //one stem
+        s.push(i);
+        s.push(j);
+
+        i += 1;
+        j -= 1;
+
+        level += 1;
+      }
+
+      u5 = [i - 1];
+      u3 = [j + 1];
+      elements.push(['s', level, s.sort(numberSort)]);
+
+      return elements.concat(self.ptToElements(pt, level, i, j));
+    };
+
+    self.addLabels = function (startNumber = 1, labelInterval = 10) {
+      if (labelInterval === 0) return self;
+
+      for (let i = 1; i <= self.rnaLength; i++) {
+        // add labels
+        if (i % labelInterval === 0) {
+          //create a node for each label
+          let newX, newY;
+
+          const thisNode = self.nodes[i - 1];
+          let prevNode, nextNode;
+          let prevVec, nextVec;
+
+          if (self.rnaLength == 1) {
+            nextVec = [thisNode.x - 15, thisNode.y];
+            prevVec = [thisNode.x - 15, thisNode.y];
+          } else {
+            // if we're labelling the first node, then label it in relation to the last
+            if (i == 1) prevNode = self.nodes[self.rnaLength - 1];
+            else prevNode = self.nodes[i - 2];
+
+            // if we're labelling the last node, then label it in relation to the first
+            if (i == self.rnaLength) nextNode = self.nodes[0];
+            else nextNode = self.nodes[i];
+
+            // this nucleotide and its neighbors are paired
+            if (
+              self.pairtable[nextNode.num - startNumber + 1] !== 0 &&
+              self.pairtable[prevNode.num - startNumber + 1] !== 0 &&
+              self.pairtable[thisNode.num - startNumber + 1] !== 0
+            ) {
+              prevNode = nextNode = self.nodes[self.pairtable[thisNode.num - startNumber + 1] - 1];
+            }
+
+            // this node is paired but at least one of its neighbors is unpaired
+            // place the label in the direction of the two neighbors
+            if (
+              self.pairtable[thisNode.num - startNumber + 1] !== 0 &&
+              (self.pairtable[nextNode.num - startNumber + 1] === 0 ||
+                self.pairtable[prevNode.num - startNumber + 1] === 0)
+            ) {
+              nextVec = [thisNode.x - nextNode.x, thisNode.y - nextNode.y];
+              prevVec = [thisNode.x - prevNode.x, thisNode.y - prevNode.y];
+            } else {
+              nextVec = [nextNode.x - thisNode.x, nextNode.y - thisNode.y];
+              prevVec = [prevNode.x - thisNode.x, prevNode.y - thisNode.y];
+            }
+          }
+
+          const combinedVec = [nextVec[0] + prevVec[0], nextVec[1] + prevVec[1]];
+          const vecLength = Math.sqrt(
+            combinedVec[0] * combinedVec[0] + combinedVec[1] * combinedVec[1],
+          );
+          const normedVec = [combinedVec[0] / vecLength, combinedVec[1] / vecLength];
+          const offsetVec = [-15 * normedVec[0], -15 * normedVec[1]];
+
+          newX = self.nodes[i - 1].x + offsetVec[0];
+          newY = self.nodes[i - 1].y + offsetVec[1];
+
+          const newNode = {
+            name: i + startNumber - 1,
+            num: -1,
+            radius: 6,
+            rna: self,
+            nodeType: 'label',
+            structName: self.structName,
+            elemType: 'l',
+            x: newX,
+            y: newY,
+            px: newX,
+            py: newY,
+            uid: crypto.randomUUID(),
+          };
+          const newLink = {
+            source: self.nodes[i - 1],
+            target: newNode,
+            value: 1,
+            linkType: 'label_link',
+            uid: crypto.randomUUID(),
+          };
+
+          self.nodes.push(newNode);
+          self.links.push(newLink);
+        }
+      }
+
+      return self;
+    };
+
+    self.recalculateElements = function () {
+      self.removePseudoknots();
+      self.elements = self.ptToElements(self.pairtable, 0, 1, self.dotbracket.length);
+
+      if (self.circular) {
+        //check to see if the external loop is a hairpin or a multiloop
+        const externalLoop = self.elements.filter(function (d: any[]) {
+          if (d[0] == 'e') return true;
+        });
+
+        if (externalLoop.length > 0) {
+          const eloop = externalLoop[0];
+          const nucs = eloop[2].sort(numberSort);
+
+          let prev = nucs[0];
+          let numGreater = 0;
+          for (let i = 1; i < nucs.length; i++) {
+            if (nucs[i] - prev > 1) {
+              numGreater += 1;
+            }
+            prev = nucs[i];
+          }
+
+          if (numGreater == 1) {
+            eloop[0] = 'h';
+          } else if (numGreater == 2) {
+            eloop[0] = 'i';
+          } else {
+            eloop[0] = 'm';
+          }
+        }
+      }
+
+      return self;
+    };
+
+    self.reassignLinkUids = function () {
+      // reassign uids to the links, corresponding to the uids of the two nodes
+      // they connect
+      for (let i = 0; i < self.links.length; i++) {
+        self.links[i].uid = self.links[i].source.uid + self.links[i].target.uid;
+      }
+
+      return self;
+    };
+
+    self.removePseudoknots = function () {
+      if (self.pairtable.length > 1)
+        self.pseudoknotPairs = self.pseudoknotPairs.concat(
+          rnaUtilities.removePseudoknotsFromPairtable(self.pairtable),
+        );
+
+      return self;
+    };
+
+    self.addPseudoknots = function () {
+      /* Add all of the pseudoknot pairs which are stored outside
+       * of the pairtable back to the pairtable
+       */
+      const pt = self.pairtable;
+      const pseudoknotPairs = self.pseudoknotPairs;
+
+      for (let i = 0; i < pseudoknotPairs.length; i++) {
+        pt[pseudoknotPairs[i][0]] = pseudoknotPairs[i][1];
+        pt[pseudoknotPairs[i][1]] = pseudoknotPairs[i][0];
+      }
+
+      self.pseudoknotPairs = [];
+      return self;
+    };
+
+    self.addName = function (name: string) {
+      if (typeof name == 'undefined') {
+        self.name = '';
+        return self;
+      } else {
+        self.name = name;
+        return self;
+      }
+    };
+
+    if (self.rnaLength > 0) self.recalculateElements();
+
+    self.getNodeFromNucleotides = function (nucs: any) {
+      /* Get a node given a nucleotide number or an array of nucleotide
+       * numbers indicating an element node */
+      if (Object.prototype.toString.call(nucs) === '[object Array]') {
+        for (let j = 0; j < self.nodes.length; j++) {
+          if ('nucs' in self.nodes[j]) {
+            if (self.nodes[j].nucs.equals(nucs)) {
+              return self.nodes[j];
+            }
+          }
+        }
+      } else {
+        for (let j = 0; j < self.nodes.length; j++) {
+          if (self.nodes[j].num == nucs) {
+            return self.nodes[j];
+          }
+        }
+      }
+
+      console.log('ERROR: No node found for nucs:', nucs);
+      return null;
+    };
+  }
+}
+
+export function moleculesToJson(moleculesJson: any) {
+  /* Convert a list of RNA and protein molecules to a list of RNAGraph
+   * ProteinGraph and extraLinks structure */
+
+  const nodes: Record<string, any> = {}; //index the nodes by uid
+  const graphs: any[] = [];
+  const extraLinks: any[] = [];
+
+  // Create the graphs for each molecule
+  for (let i = 0; i < moleculesJson.molecules.length; i++) {
+    const molecule = moleculesJson.molecules[i];
+    let rg: any;
+
+    if (molecule.type == 'rna') {
+      rg = new RNAGraph(molecule.seq, molecule.ss, molecule.header);
+      rg.circularizeExternal = true;
+      rg.elementsToJson()
+        .addPositions('nucleotide', molecule.positions)
+        .addLabels()
+        .reinforceStems()
+        .reinforceLoops();
+    } else if (molecule.type == 'protein') {
+      rg = new ProteinGraph(molecule.header, molecule.size);
+    }
+
+    rg.addUids(molecule.uids);
+
+    for (let j = 0; j < rg.nodes.length; j++) {
+      nodes[rg.nodes[j].uid] = rg.nodes[j];
+    }
+
+    graphs.push(rg);
+  }
+
+  //Add the extra links
+  for (let i = 0; i < moleculesJson.extraLinks.length; i++) {
+    const link = moleculesJson.extraLinks[i];
+
+    link.source = nodes[link.source];
+    link.target = nodes[link.target];
+    link.uid = crypto.randomUUID();
+
+    extraLinks.push(link);
+  }
+
+  return { graphs: graphs, extraLinks: extraLinks };
+}
