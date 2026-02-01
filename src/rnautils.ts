@@ -1,59 +1,57 @@
-var numberSort = function (a, b) {
+const numberSort = (a: number, b: number): number => {
   return a - b;
 };
 
-export function arraysEqual(a, b) {
+export function arraysEqual<T>(a: T[], b: T[]): boolean {
   // courtesy of
   // http://stackoverflow.com/questions/3115982/how-to-check-if-two-arrays-are-equal-with-javascript
   if (a === b) return true;
   if (a === null || b === null) return false;
-  if (a.length != b.length) return false;
+  if (a.length !== b.length) return false;
 
   // If you don't care about the order of the elements inside
   // the array, you should sort both arrays here.
 
-  for (var i = 0; i < a.length; ++i) {
+  for (let i = 0; i < a.length; ++i) {
     if (a[i] !== b[i]) return false;
   }
   return true;
 }
 
-export function RNAUtilities() {
-  var self = this;
-
+export class RNAUtilities {
   // the brackets to use when constructing dotbracket strings
   // with pseudoknots
-  self.bracketLeft = '([{<ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  self.bracketRight = ')]}>abcdefghijklmnopqrstuvwxyz'.split('');
+  bracketLeft: string[] = '([{<ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  bracketRight: string[] = ')]}>abcdefghijklmnopqrstuvwxyz'.split('');
 
-  self.inverseBrackets = function (bracket) {
-    var res = {};
-    for (var i = 0; i < bracket.length; i++) {
+  inverseBrackets(bracket: string[]): Record<string, number> {
+    const res: Record<string, number> = {};
+    for (let i = 0; i < bracket.length; i++) {
       res[bracket[i]] = i;
     }
     return res;
-  };
+  }
 
-  self.maximumMatching = function maximumMatching(pt) {
+  maximumMatching(pt: number[]): number[][] {
     // Courtesy of the great Ronny Lorenz
 
-    var n = pt[0];
-    var TURN = 0; //minimal number of nucleotides in the hairpin
+    const n = pt[0];
+    const TURN = 0; //minimal number of nucleotides in the hairpin
 
     /* array init */
-    var mm = new Array(n + 1);
-    for (var i = 0; i <= n; i++) {
+    const mm: number[][] = new Array(n + 1);
+    for (let i = 0; i <= n; i++) {
       mm[i] = new Array(n + 1);
-      for (var j = i; j <= n; j++) mm[i][j] = 0;
+      for (let j = i; j <= n; j++) mm[i][j] = 0;
     }
-    var maximum = 0;
+    let maximum = 0;
 
     /* actual computation */
-    for (var i = n - TURN - 1; i > 0; i--)
-      for (var j = i + TURN + 1; j <= n; j++) {
+    for (let i = n - TURN - 1; i > 0; i--)
+      for (let j = i + TURN + 1; j <= n; j++) {
         maximum = mm[i][j - 1];
 
-        for (var l = j - TURN - 1; l >= i; l--) {
+        for (let l = j - TURN - 1; l >= i; l--) {
           if (pt[l] === j) {
             // we have a base pair here
             maximum = Math.max(
@@ -69,76 +67,74 @@ export function RNAUtilities() {
     maximum = mm[1][n];
 
     return mm;
-  };
+  }
 
-  self.backtrackMaximumMatching = function (mm, oldPt) {
-    var pt = Array.apply(null, Array(mm.length)).map(function () {
-      return 0;
-    });
+  backtrackMaximumMatching(mm: number[][], oldPt: number[]): number[] {
     //create an array containing zeros
+    const pt = new Array(mm.length).fill(0);
 
-    self.mmBt(mm, pt, oldPt, 1, mm.length - 1);
+    this.mmBt(mm, pt, oldPt, 1, mm.length - 1);
     return pt;
-  };
+  }
 
-  self.mmBt = function (mm, pt, oldPt, i, j) {
+  mmBt(mm: number[][], pt: number[], oldPt: number[], i: number, j: number): void {
     // Create a pairtable from the backtracking
-    var maximum = mm[i][j];
-    var TURN = 0;
+    const maximum = mm[i][j];
+    const TURN = 0;
 
     if (j - i - 1 < TURN) return; /* no more pairs */
 
-    if (mm[i][j - 1] == maximum) {
+    if (mm[i][j - 1] === maximum) {
       /* j is unpaired */
-      self.mmBt(mm, pt, oldPt, i, j - 1);
+      this.mmBt(mm, pt, oldPt, i, j - 1);
       return;
     }
 
-    for (var q = j - TURN - 1; q >= i; q--) {
+    for (let q = j - TURN - 1; q >= i; q--) {
       /* j is paired with some q */
       if (oldPt[j] !== q) continue;
 
-      var leftPart = q > i ? mm[i][q - 1] : 0;
-      var enclosedPart = j - q - 1 > 0 ? mm[q + 1][j - 1] : 0;
+      const leftPart = q > i ? mm[i][q - 1] : 0;
+      const enclosedPart = j - q - 1 > 0 ? mm[q + 1][j - 1] : 0;
 
-      if (leftPart + enclosedPart + 1 == maximum) {
+      if (leftPart + enclosedPart + 1 === maximum) {
         // there's a base pair between j and q
         pt[q] = j;
         pt[j] = q;
 
-        if (i < q) self.mmBt(mm, pt, oldPt, i, q - 1);
+        if (i < q) this.mmBt(mm, pt, oldPt, i, q - 1);
 
-        self.mmBt(mm, pt, oldPt, q + 1, j - 1);
+        this.mmBt(mm, pt, oldPt, q + 1, j - 1);
         return;
       }
     }
 
     //alert(i + "," + j + ": backtracking failed!");
     console.log('FAILED!!!' + i + ',' + j + ': backtracking failed!');
-  };
+  }
 
-  self.dotbracketToPairtable = function (dotbracket) {
+  dotbracketToPairtable(dotbracket: string): number[] {
     // create an array and initialize it to 0
-    var pt = Array.apply(null, new Array(dotbracket.length + 1)).map(Number.prototype.valueOf, 0);
+    const pt = new Array(dotbracket.length + 1).fill(0);
 
     //  the first element is always the length of the RNA molecule
     pt[0] = dotbracket.length;
 
     // store the pairing partners for each symbol
-    var stack = {};
-    for (var i = 0; i < self.bracketLeft.length; i++) {
+    const stack: Record<number, number[]> = {};
+    for (let i = 0; i < this.bracketLeft.length; i++) {
       stack[i] = [];
     }
 
     // lookup the index of each symbol in the bracket array
-    var inverseBracketLeft = self.inverseBrackets(self.bracketLeft);
-    var inverseBracketRight = self.inverseBrackets(self.bracketRight);
+    const inverseBracketLeft = this.inverseBrackets(this.bracketLeft);
+    const inverseBracketRight = this.inverseBrackets(this.bracketRight);
 
-    for (var i = 0; i < dotbracket.length; i++) {
-      var a = dotbracket[i];
-      var ni = i + 1;
+    for (let i = 0; i < dotbracket.length; i++) {
+      const a = dotbracket[i];
+      const ni = i + 1;
 
-      if (a == '.' || a == 'o') {
+      if (a === '.' || a === 'o') {
         // unpaired
         pt[ni] = 0;
       } else {
@@ -147,57 +143,56 @@ export function RNAUtilities() {
           stack[inverseBracketLeft[a]].push(ni);
         } else if (a in inverseBracketRight) {
           // close pair?
-          var j = stack[inverseBracketRight[a]].pop();
+          const j = stack[inverseBracketRight[a]].pop()!;
 
           pt[ni] = j;
           pt[j] = ni;
         } else {
-          throw 'Unknown symbol in dotbracket string';
+          throw new Error('Unknown symbol in dotbracket string');
         }
       }
     }
 
-    for (var key in stack) {
+    for (const key in stack) {
       if (stack[key].length > 0) {
-        throw 'Unmatched base at position ' + stack[key][0];
+        throw new Error('Unmatched base at position ' + stack[key][0]);
       }
     }
 
     return pt;
-  };
+  }
 
-  self.insertIntoStack = function (stack, i, j) {
-    var k = 0;
+  insertIntoStack(stack: Record<number, number[]>, i: number, j: number): number {
+    let k = 0;
     while (stack[k].length > 0 && stack[k][stack[k].length - 1] < j) {
       k += 1;
     }
 
     stack[k].push(j);
     return k;
-  };
+  }
 
-  self.deleteFromStack = function (stack, j) {
-    var k = 0;
-    while (stack[k].length === 0 || stack[k][stack[k].length - 1] != j) {
+  deleteFromStack(stack: Record<number, number[]>, j: number): number {
+    let k = 0;
+    while (stack[k].length === 0 || stack[k][stack[k].length - 1] !== j) {
       k += 1;
     }
     stack[k].pop();
     return k;
-  };
+  }
 
-  self.pairtableToDotbracket = function (pt) {
+  pairtableToDotbracket(pt: number[]): string {
     // store the pairing partners for each symbol
-    var stack = {};
-    for (var i = 0; i < pt[0]; i++) {
+    const stack: Record<number, number[]> = {};
+    for (let i = 0; i < pt[0]; i++) {
       stack[i] = [];
     }
 
-    var seen = {};
-    var res = '';
-    var i;
-    for (var i = 1; i < pt[0] + 1; i++) {
+    const seen: Record<number, boolean> = {};
+    let res = '';
+    for (let i = 1; i < pt[0] + 1; i++) {
       if (pt[i] !== 0 && pt[i] in seen) {
-        throw 'Invalid pairtable contains duplicate entries';
+        throw new Error('Invalid pairtable contains duplicate entries');
       }
       seen[pt[i]] = true;
 
@@ -205,31 +200,31 @@ export function RNAUtilities() {
         res += '.';
       } else {
         if (pt[i] > i) {
-          res += self.bracketLeft[self.insertIntoStack(stack, i, pt[i])];
+          res += this.bracketLeft[this.insertIntoStack(stack, i, pt[i])];
         } else {
-          res += self.bracketRight[self.deleteFromStack(stack, i)];
+          res += this.bracketRight[this.deleteFromStack(stack, i)];
         }
       }
     }
 
     return res;
-  };
+  }
 
-  self.findUnmatched = function (pt, from, to) {
+  findUnmatched(pt: number[], from: number, to: number): number[][][] {
     /*
      * Find unmatched nucleotides in this molecule.
      */
-    var toRemove = [];
-    var unmatched = [];
+    let toRemove: number[][][] = [];
+    const unmatched: number[][] = [];
 
-    var origFrom = from;
-    var origTo = to;
-    var i;
+    const origFrom = from;
+    const origTo = to;
 
-    for (var i = from; i <= to; i++)
+    for (let i = from; i <= to; i++) {
       if (pt[i] !== 0 && (pt[i] < from || pt[i] > to)) unmatched.push([i, pt[i]]);
+    }
 
-    for (var i = origFrom; i <= origTo; i++) {
+    for (let i = origFrom; i <= origTo; i++) {
       while (pt[i] === 0 && i <= origTo) i++;
 
       to = pt[i];
@@ -239,15 +234,15 @@ export function RNAUtilities() {
         to--;
       }
 
-      toRemove = toRemove.concat(self.findUnmatched(pt, i, to));
+      toRemove = toRemove.concat(this.findUnmatched(pt, i, to));
     }
 
     if (unmatched.length > 0) toRemove.push(unmatched);
 
     return toRemove;
-  };
+  }
 
-  self.removePseudoknotsFromPairtable = function (pt) {
+  removePseudoknotsFromPairtable(pt: number[]): number[][] {
     /* Remove the pseudoknots from this structure in such a fashion
      * that the least amount of base-pairs need to be broken
      *
@@ -255,14 +250,14 @@ export function RNAUtilities() {
      * indicating the broken base pairs is returned.
      */
 
-    var mm = self.maximumMatching(pt);
-    var newPt = self.backtrackMaximumMatching(mm, pt);
-    var removed = [];
+    const mm = this.maximumMatching(pt);
+    const newPt = this.backtrackMaximumMatching(mm, pt);
+    const removed: number[][] = [];
 
-    for (var i = 1; i < pt.length; i++) {
+    for (let i = 1; i < pt.length; i++) {
       if (pt[i] < i) continue;
 
-      if (newPt[i] != pt[i]) {
+      if (newPt[i] !== pt[i]) {
         removed.push([i, pt[i]]);
         pt[pt[i]] = 0;
         pt[i] = 0;
@@ -270,9 +265,15 @@ export function RNAUtilities() {
     }
 
     return removed;
-  };
+  }
 
-  self.ptToElements = function (pt, level, i, j, dotBracketBreaks) {
+  ptToElements(
+    pt: number[],
+    level: number,
+    i: number,
+    j: number,
+    dotBracketBreaks: number[] = []
+  ): Array<[string, number, number[]]> {
     /* Convert a pair table to a list of secondary structure
      * elements:
      *
@@ -287,17 +288,15 @@ export function RNAUtilities() {
      * Finally, there is the list of nucleotides which are part of
      * of this element.
      */
-    var elements = [];
-    var u5 = [i - 1];
-    var u3 = [j + 1];
-
-    if (arguments.length < 5) dotBracketBreaks = [];
+    let elements: Array<[string, number, number[]]> = [];
+    let u5 = [i - 1];
+    let u3 = [j + 1];
 
     if (i > j) return [];
 
-    //iterate over the unpaired regions on either side
-    //this is either 5' and 3' unpaired if level == 0
-    //or an interior loop or a multiloop
+    // iterate over the unpaired regions on either side
+    // this is either 5' and 3' unpaired if level == 0
+    // or an interior loop or a multiloop
     for (; pt[i] === 0; i++) {
       u5.push(i);
     }
@@ -306,16 +305,16 @@ export function RNAUtilities() {
     }
 
     if (i > j) {
-      //hairpin loop or one large unpaired molecule
+      // hairpin loop or one large unpaired molecule
       u5.push(i);
       if (level === 0) return [['e', level, u5.sort(numberSort)]];
       else {
         // check to see if we have chain breaks due
         // to multiple strands in the input
-        var external = false;
-        var left = [];
-        var right = [];
-        for (var k = 0; k < u5.length; k++) {
+        let external = false;
+        const left: number[] = [];
+        const right: number[] = [];
+        for (let k = 0; k < u5.length; k++) {
           if (external) right.push(u5[k]);
           else left.push(u5[k]);
 
@@ -330,16 +329,16 @@ export function RNAUtilities() {
       }
     }
 
-    if (pt[i] != j) {
+    if (pt[i] !== j) {
       //multiloop
-      var m = u5;
-      var k = i;
+      let m = u5;
+      let k = i;
 
       // the nucleotide before and the starting nucleotide
       m.push(k);
       while (k <= j) {
         // recurse into a stem
-        elements = elements.concat(self.ptToElements(pt, level, k, pt[k], dotBracketBreaks));
+        elements = elements.concat(this.ptToElements(pt, level, k, pt[k], dotBracketBreaks));
 
         // add the nucleotides between stems
         m.push(pt[k]);
@@ -365,14 +364,14 @@ export function RNAUtilities() {
       u5.push(i);
       u3.push(j);
 
-      var combined = u5.concat(u3);
+      const combined = u5.concat(u3);
       if (combined.length > 4) {
         if (level === 0) elements.push(['e', level, u5.concat(u3).sort(numberSort)]);
         else elements.push(['i', level, u5.concat(u3).sort(numberSort)]);
       }
     }
 
-    var s = [];
+    const s: number[] = [];
     //go through the stem
     while (pt[i] === j && i < j) {
       //one stem
@@ -389,56 +388,69 @@ export function RNAUtilities() {
     u3 = [j + 1];
     elements.push(['s', level, s.sort(numberSort)]);
 
-    return elements.concat(self.ptToElements(pt, level, i, j, dotBracketBreaks));
-  };
+    return elements.concat(this.ptToElements(pt, level, i, j, dotBracketBreaks));
+  }
 }
 
-export var rnaUtilities = new RNAUtilities();
+export const rnaUtilities = new RNAUtilities();
 
-export function ColorScheme(colorsText) {
-  var self = this;
-  self.colorsText = colorsText;
+interface ColorsJson {
+  colorValues: Record<string, Record<number, string | number>>;
+  range: [string, string];
+  domain?: [number, number];
+}
 
-  self.parseRange = function (rangeText) {
+export class ColorScheme {
+  colorsText: string;
+  colorsJson: ColorsJson;
+
+  constructor(colorsText: string) {
+    this.colorsText = colorsText;
+    this.colorsJson = this.parseColorText(this.colorsText);
+  }
+
+  parseRange(rangeText: string): number[] {
     //parse a number range such as 1-10 or 3,7,9 or just 7
-    var parts = rangeText.split(',');
-    var nums = [];
+    const parts = rangeText.split(',');
+    const nums: number[] = [];
 
-    for (var i = 0; i < parts.length; i++) {
+    for (let i = 0; i < parts.length; i++) {
       //could be 1 or 10-11  or something like that
-      var parts1 = parts[i].split('-');
+      const parts1 = parts[i].split('-');
 
-      if (parts1.length == 1) nums.push(parseInt(parts1[0]));
-      else if (parts1.length == 2) {
-        var from = parseInt(parts1[0]);
-        var to = parseInt(parts1[1]);
+      if (parts1.length === 1) {
+        nums.push(parseInt(parts1[0]));
+      } else if (parts1.length === 2) {
+        const from = parseInt(parts1[0]);
+        const to = parseInt(parts1[1]);
 
         // add each number in this range
-        for (var j = from; j <= to; j++) nums.push(j);
+        for (let j = from; j <= to; j++) nums.push(j);
       } else {
         console.log('Malformed range (too many dashes):', rangeText);
       }
     }
 
     return nums;
-  };
+  }
 
-  self.parseColorText = function (colorText) {
+  parseColorText(colorText: string): ColorsJson {
     /* Parse the text of an RNA color string. Instructions and description
      * of the format are given below.
      *
-     * The return is a json double dictionary indexed first by the
+     * The return is a JSON double dictionary indexed first by the
      * molecule name, then by the nucleotide. This is then applied
      * by force.js to the RNAs it is displaying. When no molecule
-     * name is specified, the color is applied to all molecules*/
-    var lines = colorText.split('\n');
-    var currMolecule = '';
-    var counter = 1;
-    var colorsJson = { colorValues: { '': {} }, range: ['white', 'steelblue'] };
-    var domainValues = [];
+     * name is specified, the color is applied to all molecules
+     */
+    const lines = colorText.split('\n');
+    let currMolecule = '';
+    let counter = 1;
+    const colorsJson: ColorsJson = { colorValues: { '': {} }, range: ['white', 'steelblue'] };
+    const domainValues: number[] = [];
 
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i][0] == '>') {
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i][0] === '>') {
         // new molecule
         currMolecule = lines[i].trim().slice(1);
         counter = 1;
@@ -447,34 +459,34 @@ export function ColorScheme(colorsText) {
         continue;
       }
 
-      let words = lines[i].trim().split(/[\s]+/);
+      const words = lines[i].trim().split(/\s+/);
 
-      for (var j = 0; j < words.length; j++) {
-        if (isNaN(words[j])) {
+      for (let j = 0; j < words.length; j++) {
+        if (isNaN(Number(words[j]))) {
           if (words[j].search('range') === 0) {
             //there's a color scale in this entry
-            let parts = words[j].split('=');
-            let partsRight = parts[1].split(':');
+            const parts = words[j].split('=');
+            const partsRight = parts[1].split(':');
             colorsJson.range = [partsRight[0], partsRight[1]];
             continue;
           }
 
-          if (words[j].search('domain') == 0) {
+          if (words[j].search('domain') === 0) {
             //there's a color scale in this entry
-            let parts = words[j].split('=');
-            let partsRight = parts[1].split(':');
-            colorsJson.domain = [partsRight[0], partsRight[1]];
+            const parts = words[j].split('=');
+            const partsRight = parts[1].split(':');
+            colorsJson.domain = [Number(partsRight[0]), Number(partsRight[1])];
             continue;
           }
 
           // it's not a number, should be a combination
           // of a number (nucleotide #) and a color
-          let parts = words[j].split(':');
-          let nums = self.parseRange(parts[0]);
-          let color = parts[1];
+          const parts = words[j].split(':');
+          const nums = this.parseRange(parts[0]);
+          const color = parts[1];
 
-          for (var k = 0; k < nums.length; k++) {
-            if (isNaN(color)) {
+          for (let k = 0; k < nums.length; k++) {
+            if (isNaN(Number(color))) {
               colorsJson.colorValues[currMolecule][nums[k]] = color;
             } else {
               colorsJson.colorValues[currMolecule][nums[k]] = +color;
@@ -492,46 +504,42 @@ export function ColorScheme(colorsText) {
       }
     }
 
-    if (!('domain' in colorsJson))
-      colorsJson.domain = [Math.min.apply(null, domainValues), Math.max.apply(null, domainValues)];
+    if (!colorsJson.domain) {
+      colorsJson.domain = [Math.min(...domainValues), Math.max(...domainValues)];
+    }
 
-    self.colorsJson = colorsJson;
+    return colorsJson;
+  }
 
-    return self;
-  };
-
-  self.normalizeColors = function () {
+  normalizeColors(): this {
     /*
      * Normalize the passed in values so that they range from
      * 0 to 1
      */
-    var value;
+    let value: string | number;
 
-    for (var moleculeName in self.colorsJson) {
-      var minNum = Number.MAX_VALUE;
-      var maxNum = Number.MIN_VALUE;
+    for (const moleculeName in this.colorsJson) {
+      let minNum = Number.MAX_VALUE;
+      let maxNum = Number.MIN_VALUE;
 
       // iterate once to find the min and max values;
-      for (var resnum in self.colorsJson.colorValues[moleculeName]) {
-        value = self.colorsJson.colorValues[moleculeName][resnum];
-        if (typeof value == 'number') {
+      for (const resnum in this.colorsJson.colorValues[moleculeName]) {
+        value = this.colorsJson.colorValues[moleculeName][resnum];
+        if (typeof value === 'number') {
           if (value < minNum) minNum = value;
           if (value > maxNum) maxNum = value;
         }
       }
 
       // iterate again to normalize
-      for (resnum in self.colorsJson.colorValues[moleculeName]) {
-        value = self.colorsJson.colorValues[moleculeName][resnum];
-        if (typeof value == 'number') {
-          self.colorsJson.colorValues[moleculeName][resnum] = (value - minNum) / (maxNum - minNum);
+      for (const resnum in this.colorsJson.colorValues[moleculeName]) {
+        value = this.colorsJson.colorValues[moleculeName][resnum];
+        if (typeof value === 'number') {
+          this.colorsJson.colorValues[moleculeName][resnum] = (value - minNum) / (maxNum - minNum);
         }
       }
     }
 
-    return self;
-  };
-
-  self.parseColorText(self.colorsText);
-  return self;
+    return this;
+  }
 }

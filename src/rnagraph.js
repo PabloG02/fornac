@@ -4,12 +4,6 @@ var numberSort = function (a, b) {
   return a - b;
 };
 
-if (typeof String.prototype.trim === 'undefined') {
-  String.prototype.trim = function () {
-    return String(this).replace(/^\s+|\s+$/g, '');
-  };
-}
-
 export function ProteinGraph(structName, size, uid) {
   var self = this;
 
