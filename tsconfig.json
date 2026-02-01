@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    "allowJs": true,
+    "checkJs": false,
+    "emitDeclarationOnly": false,
+//    "noUnusedLocals": true,
+//    "noUnusedParameters": true,
+//    "noFallthroughCasesInSwitch": true,
+  },
+  "include": ["src/**/*"],
+}
