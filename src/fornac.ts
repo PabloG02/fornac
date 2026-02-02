@@ -954,7 +954,7 @@ export function FornaContainer(
       });
 
     let linksEnter = allLinks.enter();
-    createNewLinks(linksEnter);
+    allLinks = createNewLinks(linksEnter).merge(allLinks);
 
     allLinks.exit().remove();
 
@@ -962,7 +962,7 @@ export function FornaContainer(
     //.attr('pointer-events', 'all');
 
     let gnodesEnter = gnodes.enter();
-    createNewNodes(gnodesEnter);
+    gnodes = createNewNodes(gnodesEnter).merge(gnodes);
     gnodes.exit().remove();
 
     //fake_nodes = self.graph.nodes.filter(function(d) { return d.nodeType == 'middle'; });
