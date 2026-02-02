@@ -140,5 +140,10 @@ export function simpleXyCoordinates(pair_table: number[]): [number, number][] {
     alpha += Math.PI - angle[i + 1];
   }
 
+  const invalid = poss.findIndex((p) => !Number.isFinite(p[0]) || !Number.isFinite(p[1]));
+  if (invalid !== -1) {
+    console.warn('[fornac] simpleXyCoordinates invalid', invalid, poss[invalid]);
+  }
+
   return poss;
 }

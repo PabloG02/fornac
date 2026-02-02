@@ -1,7 +1,7 @@
 import './d3-context-menu.css';
 import ArrowIcon from './img/play.svg';
 
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 
 type ContextMenuTitle = string | ((data: any) => string);
 type ContextMenuAction = (elm: Element, d: any, i: number, mousePos: [number, number] | null) => void;

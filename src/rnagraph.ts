@@ -130,6 +130,9 @@ export class RNAGraph {
       for (let i = 0; i < labelNodes.length; i++) {
         labelNodes[i].x = positions[i][0];
         labelNodes[i].y = positions[i][1];
+        if (!Number.isFinite(labelNodes[i].x) || !Number.isFinite(labelNodes[i].y)) {
+          console.warn('[fornac] addPositions invalid', nodeType, i, labelNodes[i], positions[i]);
+        }
       }
 
       return self;
@@ -726,6 +729,24 @@ export class RNAGraph {
 
           newX = self.nodes[i - 1].x + offsetVec[0];
           newY = self.nodes[i - 1].y + offsetVec[1];
+
+          if (!Number.isFinite(newX) || !Number.isFinite(newY)) {
+            console.warn('[fornac] addLabels invalid', {
+              i,
+              startNumber,
+              thisNode,
+              prevNode,
+              nextNode,
+              prevVec,
+              nextVec,
+              combinedVec,
+              vecLength,
+              normedVec,
+              offsetVec,
+              newX,
+              newY,
+            });
+          }
 
           const newNode = {
             name: i + startNumber - 1,

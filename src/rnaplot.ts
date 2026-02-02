@@ -1,4 +1,4 @@
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 
 import { RNAGraph } from './rnagraph.js';
 
@@ -73,8 +73,8 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
 
       return {
         scaleFactor: scaleFactor,
-        scale: d3.scale
-          .linear()
+        scale: d3
+          .scaleLinear()
           .domain(newDomain)
           .range([newRange[0] + newMargin, newRange[1] - newMargin]),
       };
@@ -84,13 +84,13 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
 
     if (xExtra > yExtra) {
       // we have to shrink more in the x-dimension than the y
-      xScale = d3.scale.linear().domain(xExtent).range([0, options.width]);
+      xScale = d3.scaleLinear().domain(xExtent).range([0, options.width]);
 
       ret = createOtherScale(xScale, yExtent, [0, options.height]);
       yScale = ret.scale;
     } else {
       // we have to shrink more in the x-dimension than the y
-      yScale = d3.scale.linear().domain(yExtent).range([0, options.height]);
+      yScale = d3.scaleLinear().domain(yExtent).range([0, options.height]);
 
       ret = createOtherScale(yScale, xExtent, [0, options.width]);
       xScale = ret.scale;
@@ -221,7 +221,7 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
       .step_size(0.2);
     const results = fbundling();
 
-    const d3line = d3.svg
+    const d3line = d3
       .line()
       .x(function (d: any) {
         return d.x;
@@ -229,7 +229,7 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
       .y(function (d: any) {
         return d.y;
       })
-      .interpolate('linear');
+      .curve(d3.curveLinear);
 
     for (let i = 0; i < results.length; i++) {
       const edge_subpoint_data = results[i];

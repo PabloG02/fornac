@@ -22,7 +22,7 @@ The code is straightforward. After importing the necessary JavaScript files, cre
     <div id="rna_ss"></div>
     This is after the RNA container.
 
-    <script src="https://unpkg.com/d3@3.5"></script>
+    <script src="https://unpkg.com/d3@4.13.0"></script>
     <script type="module">
       import { FornaContainer } from './fornac.esm.js';
 
