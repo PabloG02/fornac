@@ -8,7 +8,3 @@ declare module '*.svg' {
   export default url;
 }
 
-declare module 'd3' {
-  const d3: any;
-  export default d3;
-}

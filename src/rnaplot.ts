@@ -1,4 +1,4 @@
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 
 import { RNAGraph } from './rnagraph.js';
 
@@ -73,8 +73,8 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
 
       return {
         scaleFactor: scaleFactor,
-        scale: d3.scale
-          .linear()
+        scale: d3
+          .scaleLinear()
           .domain(newDomain)
           .range([newRange[0] + newMargin, newRange[1] - newMargin]),
       };
@@ -84,13 +84,13 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
 
     if (xExtra > yExtra) {
       // we have to shrink more in the x-dimension than the y
-      xScale = d3.scale.linear().domain(xExtent).range([0, options.width]);
+      xScale = d3.scaleLinear().domain(xExtent).range([0, options.width]);
 
       ret = createOtherScale(xScale, yExtent, [0, options.height]);
       yScale = ret.scale;
     } else {
       // we have to shrink more in the x-dimension than the y
-      yScale = d3.scale.linear().domain(yExtent).range([0, options.height]);
+      yScale = d3.scaleLinear().domain(yExtent).range([0, options.height]);
 
       ret = createOtherScale(yScale, xExtent, [0, options.width]);
       xScale = ret.scale;
@@ -213,32 +213,31 @@ export function rnaPlot(passedOptions: Partial<RnaPlotOptions> = {}) {
       });
     }
 
-    const fbundling = (d3 as any)
-      .ForceEdgeBundling()
-      .nodes(nodesDict)
-      .edges(linksList)
-      .compatibility_threshold(0.8)
-      .step_size(0.2);
-    const results = fbundling();
-
-    const d3line = d3.svg
+    const d3line = d3
       .line()
+      .curve(d3.curveBundle.beta(0.85))
       .x(function (d: any) {
         return d.x;
       })
       .y(function (d: any) {
         return d.y;
-      })
-      .interpolate('linear');
+      });
 
-    for (let i = 0; i < results.length; i++) {
-      const edge_subpoint_data = results[i];
-      // for each of the arrays in the results
-      // draw a line between the subdivions points for that edge
+    for (let i = 0; i < linksList.length; i++) {
+      const source = nodesDict[linksList[i].source];
+      const target = nodesDict[linksList[i].target];
+      if (!source || !target) continue;
+
+      const mid = {
+        x: (source.x + target.x) / 2,
+        y: (source.y + target.y) / 2,
+      };
+
+      const edgePoints = [source, mid, target];
 
       selection
         .append('path')
-        .attr('d', d3line(edge_subpoint_data))
+        .attr('d', d3line(edgePoints) as string)
         .style('fill', 'none')
         .attr('link-type', function () {
           return linksList[i].linkType;

@@ -1,7 +1,7 @@
 import './d3-context-menu.css';
 import ArrowIcon from './img/play.svg';
 
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 
 type ContextMenuTitle = string | ((data: any) => string);
 type ContextMenuAction = (elm: Element, d: any, i: number, mousePos: [number, number] | null) => void;
@@ -94,17 +94,22 @@ export function contextMenu(
   // this gets executed when a contextmenu event occurs
   return function (
     this: Element,
+    event: MouseEvent | null,
     data: any,
     index: number,
     pMouseUp = false,
     clickAwayFunc: () => void = () => {},
   ) {
     const elm = this;
+    const menuIndex = index ?? 0;
     let mousePos: [number, number] | null = null;
     const currentThis = this;
 
-    if (rootElement == null) mousePos = d3.mouse(this) as [number, number];
-    else mousePos = d3.mouse(rootElement) as [number, number]; // for recursive menus, we need the mouse
+    if (event) {
+      if (rootElement == null) mousePos = d3.pointer(event, this) as [number, number];
+      else mousePos = d3.pointer(event, rootElement) as [number, number];
+    }
+    // for recursive menus, we need the mouse position relative to another element
     // position relative to another element
 
     clickAway = clickAwayFunc;
@@ -115,12 +120,10 @@ export function contextMenu(
     d3.selectAll(`.${menuClass}`).html('');
     const list = d3
       .selectAll(`.${menuClass}`)
-      .on('contextmenu', function () {
+      .on('contextmenu', function (event) {
         console.log('context-menu close');
         d3.select(`.${menuClass}`).style('display', 'none');
         orientation = 'right';
-
-        const event = d3.event as any;
         event.preventDefault();
         event.stopPropagation();
       })
@@ -159,10 +162,10 @@ export function contextMenu(
         }
         return typeof d.title === 'string' ? d.title : d.title ? d.title(data) : '';
       })
-      .on('click', function (d: ContextMenuItem) {
+      .on('click', function (_event, d: ContextMenuItem) {
         if (d.disabled) return; // do nothing if disabled
         if (!d.action) return; // headers have no "action"
-        d.action(elm, data, index, mousePos);
+        d.action(elm, data, menuIndex, mousePos);
         console.log('click close');
 
         // close all context menus
@@ -173,8 +176,9 @@ export function contextMenu(
           closeCallback();
         }
       })
-      .on('mouseenter', function (this: HTMLElement, d: ContextMenuItem, i: number) {
+      .on('mouseenter', function (this: HTMLElement, _event, d: ContextMenuItem) {
         d3.select(this).classed('d3-context-menu-selected', true);
+        const itemIndex = items.indexOf(d);
 
         if (openChildMenuUid != null) {
           // there's a child menu open
@@ -235,7 +239,7 @@ export function contextMenu(
             });
           }
 
-          d.childUid = childrenContextMenu.apply(this, [data, i, true, function () {}]);
+          d.childUid = childrenContextMenu.call(this, null, data, itemIndex, true, function () {});
           openChildMenuUid = d.childUid ?? null;
         }
 
@@ -259,7 +263,7 @@ export function contextMenu(
     // the openCallback allows an action to fire before the menu is displayed
     // an example usage would be closing a tooltip
     if (openCallback) {
-      if (openCallback(data, index) === false) {
+      if (openCallback(data, menuIndex) === false) {
         return uid;
       }
     }
@@ -267,10 +271,11 @@ export function contextMenu(
     const contextMenuSelection = d3.select(`.${menuClass}`).style('display', 'block');
 
     if (initialPos == null) {
-      const event = d3.event as any;
-      d3.select(`.${menuClass}`)
-        .style('left', event.pageX - 2 + 'px')
-        .style('top', event.pageY - 2 + 'px');
+      if (event) {
+        d3.select(`.${menuClass}`)
+          .style('left', event.pageX - 2 + 'px')
+          .style('top', event.pageY - 2 + 'px');
+      }
     } else {
       d3.select(`.${menuClass}`)
         .style('left', `${initialPos[0]}px`)
@@ -285,11 +290,11 @@ export function contextMenu(
 
       // menu goes of the end of the window, position it the other way
       if (initialPos == null) {
-        // place the menu where the user clicked
-        const event = d3.event as any;
-        d3.select(`.${menuClass}`)
-          .style('left', event.pageX - 2 - boundingRect.width + 'px')
-          .style('top', event.pageY - 2 + 'px');
+        if (event) {
+          d3.select(`.${menuClass}`)
+            .style('left', event.pageX - 2 - boundingRect.width + 'px')
+            .style('top', event.pageY - 2 + 'px');
+        }
       } else {
         if (parentStart != null) {
           d3.select(`.${menuClass}`)
@@ -307,9 +312,10 @@ export function contextMenu(
 
     if (previouslyMouseUp) return uid;
 
-    const event = d3.event as any;
-    event.preventDefault();
-    event.stopPropagation();
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     //d3.event.stopImmediatePropagation();
     //
     return uid;

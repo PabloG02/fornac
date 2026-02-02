@@ -1,4 +1,4 @@
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 
 import { rnaPlot } from './rnaplot.js';
 
@@ -41,22 +41,22 @@ export function rnaTreemap(passedOptions: Partial<RnaTreemapOptions> = {}) {
     selection.each(function (this: Element, d: any) {
       d3.select(this)
         .attr('transform', function (d: any) {
-          return `translate(${d.x},${d.y})`;
+          return `translate(${d.x0},${d.y0})`;
         })
         .append('rect')
         .attr('fill', 'transparent')
         .attr('width', function (d: any) {
-          return Math.max(0, d.dx);
+          return Math.max(0, d.x1 - d.x0);
         })
         .attr('height', function (d: any) {
-          return Math.max(0, d.dy);
+          return Math.max(0, d.y1 - d.y0);
         });
 
       // draw the actual RNA structure
       const chart = rnaPlot(options) as any;
-      chart.width(Math.max(0, d.dx)).height(Math.max(0, d.dy));
+      chart.width(Math.max(0, d.x1 - d.x0)).height(Math.max(0, d.y1 - d.y0));
 
-      if ('structure' in d) d3.select(this).call(chart);
+      if ('structure' in d.data) d3.select(this).datum(d.data).call(chart);
     });
   }
 
@@ -70,13 +70,16 @@ export function rnaTreemap(passedOptions: Partial<RnaTreemapOptions> = {}) {
       //               'sequence': 'ACCGGCC',
       //               'size': 50}]
       // }
-      const treemap = d3.layout
-        .treemap()
-        .size([options.width, options.height])
-        .sticky(false)
-        .value(function (d: any) {
-          return d.size;
+      const treemap = d3.treemap().size([options.width, options.height]);
+      const root = d3
+        .hierarchy(data)
+        .sum(function (d: any) {
+          return d.size ?? 0;
+        })
+        .sort(function (a, b) {
+          return (b.value ?? 0) - (a.value ?? 0);
         });
+      treemap(root);
 
       // create a new <g> for each node in the treemap
       // this may be a little redundant, since we expect the calling
@@ -85,7 +88,7 @@ export function rnaTreemap(passedOptions: Partial<RnaTreemapOptions> = {}) {
       gEnter
         .datum(data)
         .selectAll('.treemapnode')
-        .data(treemap.nodes)
+        .data(root.leaves())
         .enter()
         .append('g')
         .classed('treemapnode', true)

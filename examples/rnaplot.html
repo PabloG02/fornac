@@ -31,8 +31,7 @@
       <div id="rna_rpt" class="svg-container-grid"></div>
     </main>
 
-    <script src="https://unpkg.com/d3@3.5"></script>
-    <script src="https://unpkg.com/d3-grid"></script>
+    <script src="https://unpkg.com/d3@6.7.0"></script>
     <script type="module">
       import { rnaPlot } from '@pablog02/fornac';
 
@@ -93,15 +92,15 @@
 
       const gridChart = rnaPlot().width(cellWidth).height(cellHeight);
 
-      const rectGrid = d3.layout
-        .grid()
-        .bands()
-        .size([svgWidth2, svgHeight2])
-        .cols(numCols)
-        .padding(padding)
-        .nodeSize([cellWidth, cellHeight]);
-
-      const rectData = rectGrid(gridData);
+      const rectData = gridData.map((d, i) => {
+        const col = i % numCols;
+        const row = Math.floor(i / numCols);
+        return {
+          ...d,
+          x: col * (cellWidth + padding[0]),
+          y: row * (cellHeight + padding[1]),
+        };
+      });
 
       const gridSvg = d3
         .select('#rna_rgl')
@@ -114,11 +113,12 @@
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-      const zoom = () => {
-        zoomContainer.attr('transform', `translate(${d3.event.translate})scale(${d3.event.scale})`);
+      const zoom = (event) => {
+        zoomContainer.attr('transform', event.transform.toString());
       };
 
-      const gZoom = gridSvg.append('g').call(d3.behavior.zoom().scaleExtent([1, gridData.length]).on('zoom', zoom));
+      const zoomBehavior = d3.zoom().scaleExtent([1, gridData.length]).on('zoom', zoom);
+      const gZoom = gridSvg.append('g').call(zoomBehavior);
 
       gZoom.append('rect').attr('class', 'overlay').attr('width', svgWidth2).attr('height', svgHeight2);
 

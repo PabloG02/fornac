@@ -4,7 +4,7 @@
 
 import fstyle from './fornac.module.css';
 
-import d3 from './d3-shim.js';
+import * as d3 from 'd3';
 import { contextMenu } from './d3-context-menu.js';
 
 import { RNAGraph, ProteinGraph } from './rnagraph.js';
@@ -51,9 +51,9 @@ export function FornaContainer(
     pseudoknot: 0.0,
     proteinChain: 0.0,
     chainChain: 0.0,
-    intermolecule: 10.0,
+    intermolecule: 10.0,  // TODO: adjust this value
     external: 0.0,
-    other: 10.0,
+    other: 10.0,  // TODO: adjust this value
   };
 
   self.displayParameters = {
@@ -113,8 +113,7 @@ export function FornaContainer(
     var shiftKeydown = false;
     var ctrlKeydown = false;
 
-    let keydown = () => {
-      const event = d3.event as any;
+    let keydown = (event: KeyboardEvent) => {
       switch (event.keyCode) {
         case 68: //'d' key
           console.log('dotbracket:', self.getStructuresDotBracket());
@@ -151,10 +150,9 @@ export function FornaContainer(
     };
 
     d3.select('body')
-      .on('keydown', keydown)
+      .on('keydown', (event: KeyboardEvent) => keydown(event))
       .on('keyup', keyup)
-      .on('contextmenu', function () {
-        const event = d3.event as any;
+      .on('contextmenu', (event: Event) => {
         event.preventDefault();
       });
   }
@@ -178,7 +176,7 @@ export function FornaContainer(
             title: 'A',
             action: function (elm, d, i, mousePos) {
               console.log('mousePos:', mousePos, self.options.svgW, self.options.svgH);
-              let canvasMousePos = [xScale.invert(mousePos[0]), yScale.invert(mousePos[1])];
+              let canvasMousePos = self.currentTransform.invert(mousePos);
               console.log('canvasMousePos', canvasMousePos);
 
               self.addRNA('.', { sequence: 'A', centerPos: canvasMousePos });
@@ -188,7 +186,7 @@ export function FornaContainer(
             title: 'C',
             action: function (elm, d, i, mousePos) {
               console.log('mousePos:', mousePos, self.options.svgW, self.options.svgH);
-              let canvasMousePos = [xScale.invert(mousePos[0]), yScale.invert(mousePos[1])];
+              let canvasMousePos = self.currentTransform.invert(mousePos);
               console.log('canvasMousePos', canvasMousePos);
 
               self.addRNA('.', { sequence: 'C', centerPos: canvasMousePos });
@@ -198,7 +196,7 @@ export function FornaContainer(
             title: 'G',
             action: function (elm, d, i, mousePos) {
               console.log('mousePos:', mousePos, self.options.svgW, self.options.svgH);
-              let canvasMousePos = [xScale.invert(mousePos[0]), yScale.invert(mousePos[1])];
+              let canvasMousePos = self.currentTransform.invert(mousePos);
               console.log('canvasMousePos', canvasMousePos);
 
               self.addRNA('.', { sequence: 'G', centerPos: canvasMousePos });
@@ -208,7 +206,7 @@ export function FornaContainer(
             title: 'U',
             action: function (elm, d, i, mousePos) {
               console.log('mousePos:', mousePos, self.options.svgW, self.options.svgH);
-              let canvasMousePos = [xScale.invert(mousePos[0]), yScale.invert(mousePos[1])];
+              let canvasMousePos = self.currentTransform.invert(mousePos);
               console.log('canvasMousePos', canvasMousePos);
 
               self.addRNA('.', { sequence: 'U', centerPos: canvasMousePos });
@@ -349,12 +347,13 @@ export function FornaContainer(
   if (self.options.editable || self.options.animation) {
     var mouseEventHelper = svg
       .append('svg:g')
-      .on('mousemove', () => {
+      .on('mousemove', (event: MouseEvent) => {
         // only if we are dragging
         if (!mousedownNode) return;
 
         // update drag line
-        let mpos = d3.mouse(vis.node());
+        const visNode = vis.node() as any;
+        let mpos = d3.pointer(event, visNode);
         dragLine
           .attr('x1', mousedownNode.x)
           .attr('y1', mousedownNode.y)
@@ -402,23 +401,22 @@ export function FornaContainer(
       .attr('x2', 0)
       .attr('y2', 0);
 
-    svg.on('contextmenu', self.backgroundContextMenu);
+    svg.on('contextmenu', function (event, d) {
+      return self.backgroundContextMenu.call(this, event, d, 0);
+    });
   }
 
   /* Zooming related objects and functions */
-  var xScale = d3.scale.linear().domain([0, self.options.svgW]).range([0, self.options.svgW]);
-  var yScale = d3.scale.linear().domain([0, self.options.svgH]).range([0, self.options.svgH]);
+  var xScale = d3.scaleLinear().domain([0, self.options.svgW]).range([0, self.options.svgW]);
+  var yScale = d3.scaleLinear().domain([0, self.options.svgH]).range([0, self.options.svgH]);
 
-  self.zoomer = d3.behavior
+  self.currentTransform = d3.zoomIdentity;
+  self.zoomer = d3
     .zoom()
     .scaleExtent([0.1, 10])
-    .x(xScale)
-    .y(yScale)
-    .on('zoom', () => {
-      vis.attr(
-        'transform',
-        'translate(' + d3.event.translate + ')' + ' scale(' + d3.event.scale + ')',
-      );
+    .on('zoom', (event) => {
+      self.currentTransform = event.transform;
+      vis.attr('transform', event.transform.toString());
     });
 
   let enableZooming = () => {
@@ -475,15 +473,23 @@ export function FornaContainer(
     });
   };
 
-  self.brusher = d3.svg
+  self.brusher = d3
     .brush()
-    .x(xScale)
-    .y(yScale)
-    .on('brushstart', function (d) {})
-    .on('brush', function () {
-      // during brushing invert styling of selection as preview
-      const event = d3.event as any;
-      let extent = event.target.extent();
+    .extent([
+      [0, 0],
+      [self.options.svgW, self.options.svgH],
+    ])
+    .on('start', function () {})
+    .on('brush', function (event) {
+      const selection = event.selection as [[number, number], [number, number]] | null;
+      if (!selection) return;
+      const [p0, p1] = selection;
+      const inv0 = self.currentTransform.invert(p0);
+      const inv1 = self.currentTransform.invert(p1);
+      const extent = [
+        [Math.min(inv0[0], inv1[0]), Math.min(inv0[1], inv1[1])],
+        [Math.max(inv0[0], inv1[0]), Math.max(inv0[1], inv1[1])],
+      ];
 
       visNodes.selectAll('g.gnode').classed(fstyle.selectedNode, function (d) {
         const inExtent =
@@ -491,10 +497,16 @@ export function FornaContainer(
         return d.selected !== inExtent;
       });
     })
-    .on('brushend', function () {
-      // after brushing finally toggle the selection
-      const event = d3.event as any;
-      let extent = event.target.extent();
+    .on('end', function (event) {
+      const selection = event.selection as [[number, number], [number, number]] | null;
+      if (!selection) return;
+      const [p0, p1] = selection;
+      const inv0 = self.currentTransform.invert(p0);
+      const inv1 = self.currentTransform.invert(p1);
+      const extent = [
+        [Math.min(inv0[0], inv1[0]), Math.min(inv0[1], inv1[1])],
+        [Math.max(inv0[0], inv1[0]), Math.max(inv0[1], inv1[1])],
+      ];
 
       visNodes
         .selectAll('g.gnode')
@@ -505,8 +517,7 @@ export function FornaContainer(
         })
         .each(toggleSelectNode);
 
-      event.target.clear();
-      d3.select(this).call(event.target);
+      d3.select(this).call(self.brusher.move, null);
     });
 
   let enableBrushing = () => {
@@ -520,65 +531,73 @@ export function FornaContainer(
     // normal cursor
     mouseEventHelper.select('.background').style('cursor', 'auto');
     // disable brushing events
-    mouseEventHelper
-      .call(self.brusher)
-      .on('mousedown.brush', null)
-      .on('touchstart.brush', null)
-      .on('touchmove.brush', null)
-      .on('touchend.brush', null);
+    mouseEventHelper.call(self.brusher).on('.brush', null);
   };
 
   /* Force related objects and functions */
-  self.force = d3.layout
-    .force()
-    .charge(function (d) {
+  self.gravityStrength = 0.0;
+  self.chargeForce = d3
+    .forceManyBody()
+    .strength(function (d: any) {
       if (d.nodeType == 'middle') return self.options.middleCharge;
-      else return self.options.otherCharge;
+      return self.options.otherCharge;
     })
-    .friction(self.options.friction)
-    .linkDistance(function (d) {
+    .distanceMax(self.options.chargeDistance);
+
+  self.linkForce = d3
+    .forceLink(self.graph.links)
+    .distance(function (d: any) {
       return self.options.linkDistanceMultiplier * d.value;
     })
-    .linkStrength(function (d) {
+    .strength(function (d: any) {
       if (d.linkType in self.linkStrengths) {
         return self.linkStrengths[d.linkType];
-      } else {
-        return self.linkStrengths.other;
       }
-    })
-    .gravity(0.0)
-    .nodes(self.graph.nodes)
-    .links(self.graph.links)
-    .chargeDistance(self.options.chargeDistance)
-    .size([self.options.svgW, self.options.svgH]);
+      return self.linkStrengths.other;
+    });
 
-  var drag = d3.behavior
+  self.centerForceX = d3.forceX(self.options.svgW / 2).strength(self.gravityStrength);
+  self.centerForceY = d3.forceY(self.options.svgH / 2).strength(self.gravityStrength);
+
+  self.force = d3
+    .forceSimulation(self.graph.nodes)
+    .force('charge', self.chargeForce)
+    .force('link', self.linkForce)
+    .force('x', self.centerForceX)
+    .force('y', self.centerForceY)
+    .stop();
+  self.force.velocityDecay(1 - self.options.friction);
+
+  var drag = d3
     .drag()
-    .on('dragstart', function (d) {
+    .on('start', function (event) {
       console.log('dragstart');
-      d3.event.sourceEvent.stopPropagation();
+      event.sourceEvent.stopPropagation();
 
       selectedNodes().each(function (d1) {
-        d1.fixed |= 2;
+        d1.fx = d1.x;
+        d1.fy = d1.y;
       });
     })
-    .on('drag', (d) => {
+    .on('drag', (event) => {
       if (shiftKeydown) return;
       selectedNodes().each(function (d1) {
-        d1.x += d3.event.dx;
-        d1.y += d3.event.dy;
-
-        d1.px += d3.event.dx;
-        d1.py += d3.event.dy;
+        const nextX = (d1.fx ?? d1.x) + event.dx;
+        const nextY = (d1.fy ?? d1.y) + event.dy;
+        d1.fx = nextX;
+        d1.fy = nextY;
+        d1.x = nextX;
+        d1.y = nextY;
       });
 
       self.resumeForce();
-      d3.event.sourceEvent.preventDefault();
+      event.sourceEvent.preventDefault();
     })
-    .on('dragend', (d) => {
+    .on('end', () => {
       console.log('dragend');
       selectedNodes().each(function (d1) {
-        d1.fixed &= ~6;
+        d1.fx = null;
+        d1.fy = null;
       });
     });
 
@@ -659,14 +678,16 @@ export function FornaContainer(
       })
       .transition()
       .duration(750)
-      .ease('elastic');
+      .ease(d3.easeElastic);
 
     if (self.options.editable || self.options.animation) {
       gnodesEnter
         .on('mousedown', nodeMousedown)
         //.on('mousedrag', function(d) {})
         .on('mouseup', nodeMouseup)
-        .on('contextmenu', self.nodeContextMenu)
+        .on('contextmenu', function (event, d, i) {
+          return self.nodeContextMenu.call(this, event, d, i);
+        })
         .call(drag);
     }
 
@@ -913,10 +934,11 @@ export function FornaContainer(
   };
 
   self.update = function () {
-    self.force.nodes(self.graph.nodes).links(self.graph.links);
+    self.force.nodes(self.graph.nodes);
+    self.linkForce.links(self.graph.links);
 
     if (self.options.animation) {
-      self.force.start();
+      self.force.alpha(1).restart();
     }
 
     let allLinks = visLinks
@@ -952,7 +974,7 @@ export function FornaContainer(
     gnodes.select('.' + fstyle.directionArrow).each(drawDirectionArrow);
 
     self.force.on('tick', function () {
-      let q = d3.geom.quadtree(realNodes);
+      let q = d3.quadtree(realNodes, (d) => d.x, (d) => d.y);
       let i = 0;
       let n = realNodes.length;
 
@@ -1025,7 +1047,7 @@ export function FornaContainer(
     self.changeColorScheme(self.colorScheme);
 
     if (self.options.animation) {
-      self.force.start();
+      self.force.alpha(1).restart();
     }
 
     updateStyle();
@@ -1101,7 +1123,7 @@ export function FornaContainer(
         .each(function () {
           ++n;
         })
-        .each('end', function () {
+        .on('end', function () {
           if (!--n) callback.apply(this, arguments);
         });
     }
@@ -1235,19 +1257,13 @@ export function FornaContainer(
 
     if (bbTransform === null) return;
 
-    // do the actual moving
-    vis
-      .transition()
-      .attr(
-        'transform',
-        'translate(' + bbTransform.translate + ')' + ' scale(' + bbTransform.scale + ')',
-      )
-      .duration(duration);
+    const transform = d3.zoomIdentity
+      .translate(bbTransform.translate[0], bbTransform.translate[1])
+      .scale(bbTransform.scale);
 
-    // tell the zoomer what we did so that next we zoom, it uses the
-    // transformation we entered here
-    self.zoomer.translate(bbTransform.translate);
-    self.zoomer.scale(bbTransform.scale);
+    vis.transition().attr('transform', transform.toString()).duration(duration);
+    self.currentTransform = transform;
+    svg.call(self.zoomer.transform, transform);
   };
 
   self.setSize = (
@@ -1265,9 +1281,12 @@ export function FornaContainer(
     xScale.range([0, svgW]).domain([0, svgW]);
     yScale.range([0, svgH]).domain([0, svgH]);
 
-    //re-attach the scales to the zoom behaviour
-    self.zoomer.x(xScale).y(yScale);
-    self.brusher.x(xScale).y(yScale);
+    self.brusher.extent([
+      [0, 0],
+      [svgW, svgH],
+    ]);
+    self.centerForceX.x(svgW / 2);
+    self.centerForceY.y(svgH / 2);
 
     //resize the background
     svg.select('.background').attr('width', svgW).attr('height', svgH);
@@ -1307,16 +1326,15 @@ export function FornaContainer(
     self.colorScheme = newColorScheme;
 
     if (newColorScheme == 'sequence') {
-      var scale = d3.scale
-        .ordinal()
+      var scale = d3.scaleOrdinal<string, string>()
         .range(['#dbdb8d', '#98df8a', '#ff9896', '#aec7e8', '#aec7e8'])
         .domain(['A', 'C', 'G', 'U', 'T']);
       nodes.style('fill', function (d) {
         return scale(d.name);
       });
     } else if (newColorScheme == 'structure') {
-      var scale = d3.scale
-        .category10()
+      var scale = d3
+        .scaleOrdinal(d3.schemeCategory10)
         .domain(['s', 'm', 'i', 'e', 't', 'h', 'x'])
         .range([
           'lightgreen',
@@ -1333,8 +1351,7 @@ export function FornaContainer(
       });
     } else if (newColorScheme == 'positions') {
       nodes.style('fill', function (d) {
-        var scale = d3.scale
-          .linear()
+        var scale = d3.scaleLinear()
           .range(['#98df8a', '#dbdb8d', '#ff9896'])
           .interpolate(d3.interpolateLab)
           .domain([1, 1 + (d.rna.rnaLength - 1) / 2, d.rna.rnaLength]);
@@ -1349,8 +1366,7 @@ export function FornaContainer(
         'domain' in self.customColors &&
         'range' in self.customColors
       ) {
-        var scale = d3.scale
-          .linear()
+        var scale = d3.scaleLinear()
           .interpolate(d3.interpolateLab)
           .domain(self.customColors.domain)
           .range(self.customColors.range);
@@ -1859,10 +1875,9 @@ export function FornaContainer(
         return d.target.y;
       });
 
-    d3.event.preventDefault();
   }
 
-  let nodeMouseup = function (d, i) {
+  let nodeMouseup = function (event, d) {
     console.log('nodeMouseup');
     let backbonePossible = true,
       basepairPossible = true;
@@ -1960,14 +1975,9 @@ export function FornaContainer(
           linkContextMenuShown = true;
           let linkContextMenu = contextMenu(linkMenu);
           console.log('newLinkMenu');
-          linkContextMenu.apply(this, [
-            d,
-            i,
-            true,
-            function () {
-              dragLine.attr('class', fstyle.transparent);
-            },
-          ]);
+          linkContextMenu.call(this, event, d, i, true, function () {
+            dragLine.attr('class', fstyle.transparent);
+          });
         } else {
           // between end points but can't make a backbone
           if (basepairPossible) self.addLink(newLink);
@@ -1978,7 +1988,7 @@ export function FornaContainer(
     }
   };
 
-  let nodeMousedown = function (d) {
+  let nodeMousedown = function (event, d) {
     console.log('nodeMousedown');
     if (!d.selected && !ctrlKeydown) {
       // if this node isn't selected, then we have to unselect every other node
@@ -2005,11 +2015,11 @@ export function FornaContainer(
         .attr('x2', mousedownNode.x)
         .attr('y2', mousedownNode.y);
 
-      d3.event.stopPropagation();
+      event.stopPropagation();
     }
   };
 
-  let linkClick = (d) => {
+  let linkClick = (_event, d) => {
     if (!shiftKeydown) {
       return;
     }
@@ -2416,31 +2426,33 @@ export function FornaContainer(
   self.startAnimation = function () {
     self.options.animation = true;
     vis.selectAll('g.gnode').call(drag);
-    self.force.start();
+    self.force.alpha(1).restart();
   };
 
   self.stopAnimation = function () {
     self.options.animation = false;
-    vis.selectAll('g.gnode').on('mousedown.drag', null);
+    vis.selectAll('g.gnode').on('.drag', null);
     self.force.stop();
   };
 
   self.resumeForce = function () {
-    if (self.options.animation) self.force.resume();
+    if (self.options.animation) self.force.alpha(1).restart();
   };
 
   self.setFriction = function (value) {
-    self.force.friction(value);
+    self.force.velocityDecay(1 - value);
     self.resumeForce();
   };
 
   self.setCharge = function (value) {
-    self.force.charge(value);
+    self.chargeForce.strength(value);
     self.resumeForce();
   };
 
   self.setGravity = function (value) {
-    self.force.gravity(value);
+    self.gravityStrength = value;
+    self.centerForceX.strength(value);
+    self.centerForceY.strength(value);
     self.resumeForce();
   };
 
