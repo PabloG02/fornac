@@ -1,6 +1,7 @@
 import { defineConfig, UserConfig } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, readdirSync } from 'fs';
+import { copyFileSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { execSync } from 'child_process';
 
 // Get all HTML files from examples directory for examples build
 function getExampleEntries() {
@@ -17,6 +18,16 @@ function getExampleEntries() {
   return entries;
 }
 
+// Helper to get the current commit hash
+function getCommitHash() {
+  try {
+    return execSync('git rev-parse HEAD').toString().trim();
+  } catch (e) {
+    console.warn('[prepare-readme] Could not get commit hash, falling back to master');
+    return 'master';
+  }
+}
+
 const libConfig: UserConfig = {
   root: '.',
   plugins: [
@@ -30,6 +41,25 @@ const libConfig: UserConfig = {
 
         console.log(`[copy-types] Copying ${srcPath} to ${destPath}`);
         copyFileSync(srcPath, destPath);
+      }
+    },
+    {
+      name: 'prepare-readme',
+      closeBundle() {
+        const readmePath = resolve(__dirname, 'README.md');
+        const commitHash = getCommitHash();
+        const repoPath = "pablog02/fornac";
+        const rawBaseUrl = `https://raw.githubusercontent.com/${repoPath}/${commitHash}/`;
+
+        let content = readFileSync(readmePath, 'utf-8');
+
+        // This regex looks for relative paths starting with 'doc/img/'
+        // and replaces them with the full Raw GitHub URL using the commit hash
+        const updatedContent = content.replace(/doc\/img\//g, `${rawBaseUrl}doc/img/`);
+
+        // Write the modified README back to disk
+        const destPath = resolve(__dirname, 'README.md');
+        writeFileSync(destPath, updatedContent);
       }
     }
   ],
