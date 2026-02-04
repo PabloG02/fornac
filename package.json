@@ -27,7 +27,8 @@
     "./style.css": "./dist/fornac.css"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "dev": "vite",
